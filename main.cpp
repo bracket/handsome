@@ -4,6 +4,7 @@
 #include "MicropolygonMesh.hpp"
 #include "draw.hpp"
 #include "BitmapWriter.hpp"
+#include "Bezier.hpp"
 
 #include <stdio.h>
 
@@ -77,48 +78,46 @@ void aggregate_cache(SampleBuffer & buffer, AARectangle<int> const & bounds, int
 	);
 }
 
-MicropolygonMesh * test_mesh() {
-	MicropolygonMesh * mesh = new MicropolygonMesh(2, 2);
-	(*mesh)(0, 0) = 3.0f * Vec2(8.0f, 0.0f);
-	(*mesh)(1, 0) = 3.0f * Vec2(16.0f, 8.0f);
-	(*mesh)(0, 1) = 3.0f * Vec2(0.0f, 8.0f);
-	(*mesh)(1, 1) = 3.0f * Vec2(8.0f, 16.0f);
-	return mesh;
+TileCache * draw_one_bezier(float d, Vec4 const & color) {
+	Vec2 axis = Vec2(1.0f, -1.0f);
+	normalize(axis);
+
+	Bezier b;
+	b[0] = Vec2(0.0f, 0.0f);
+	b[1] = Vec2(512.0f, 512.0f) - d * axis;
+	b[2] = Vec2(512.0f, 512.0f) + d * axis;
+	b[3] = Vec2(1024.0f, 1024.0f);
+
+	MicropolygonMesh * mesh = b.bust();
+
+	TileCache * cache = new TileCache(16, 4);
+	draw(*mesh, *cache, color);
+
+	delete mesh;
+	return cache;
 }
 
-struct Output {
-	void operator () (TileCache const & cache, Vec<2, int> const & key, SampleBuffer const & buffer) const {
-		printf("%i %i\n", key.x(), key.y());
-	}
-};
-
 int main() {
-	Line l(Vec2(0, 0), Vec2(1024, 1024));
-	/*
-	Micropolygon poly(
-		Vec2(8.0f, 0.0f),
-		Vec2(16.0f, 8.0f),
-		Vec2(8.0f, 16.0f),
-		Vec2(0.0f, 8.0f)
-	);
-
-	printf("%i\n", poly.contains(Vec2(8.0f, 8.0f)));
-	*/
-
-	MicropolygonMesh * mesh = l.bust();
-	// MicropolygonMesh * mesh = test_mesh();
-
-	TileCache tile_cache(16, 4);
-	draw(*mesh, tile_cache, Vec4(0, 1, 1, 1));
-
-	// tile_cache.for_each_tile(Output());
-
 	SampleBuffer buffer(1024, 1024);
-	aggregate_cache(buffer, AARectangle<int>(0, 0, 1024, 1024), 1, tile_cache);
 
-	//SampleBuffer buffer(16, 16);
-	//aggregate_cache(buffer, AARectangle<int>(0, 0, 16, 16), 1, tile_cache);
+	Vec4 start_color(255.0f, 138.0f, 0.0f, 255.0f),
+		end_color(219.0f, 58.0f, 26.0f, 255.0f);
 	
-	 write_bitmap("out.bmp", buffer);
-	 // write_bitmap("out.bmp", *tile_cache.get_tile(Vec<2, int>(1, 1)));
+	start_color /= 255.0f;
+	end_color /= 255.0f;
+
+	float min_axis = 256.0f,
+		max_axis = 1024.0f;
+
+	for (int i = 0; i <= 9; ++i) {
+		float t = static_cast<float>(i) / 9.0f;
+		float d = (1.0f - t) * min_axis + t * max_axis;
+		Vec4 color = (1.0f - t) * start_color + t * end_color;
+		TileCache * cache = draw_one_bezier(d, color);
+		aggregate_cache(buffer, AARectangle<int>(0, 0, 1024, 1024), 1, *cache);
+		delete cache;
+	}
+
+
+	write_bitmap("out.bmp", buffer);
 }

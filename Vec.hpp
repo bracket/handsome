@@ -192,6 +192,16 @@ inline T normalize(Vec<n, T> & v) {
 }
 
 template <int n, class T>
+inline T scale_length_to(Vec<n, T> & v, T new_length) {
+	T l = length_sq(v);
+	if (!l) { return l; }
+
+	l = sqrt(l);
+	v *= (new_length / l);
+	return l;
+}
+
+template <int n, class T>
 inline T projection_ratio(Vec<n, T> const & v, Vec<n, T> const & onto) {
 	return dot(v, onto) / length_sq(onto);
 }
@@ -223,6 +233,11 @@ inline bool is_left_of(Vec<2, T> const & self, Vec<2, T> const & other) {
 template <class T>
 inline bool is_left_of_or_on(Vec<2, T> const & self, Vec<2, T> const & other) {
 	return dot(self, rot_90(other)) >= 0.0f;
+}
+
+template <class T>
+inline T cross(Vec<2, T> const & left, Vec<2, T> const & right) {
+	return left.x() * right.y() - left.y() * right.x();
 }
 
 template <class T>
