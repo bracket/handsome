@@ -98,8 +98,25 @@ struct Vec {
 		return out;
 	}
 
+	Vec operator + (T const & right) const {
+		Vec out;
+		for (int i = 0; i < n; ++i) { out[i] = values[i] + right; }
+		return out;
+	}
+
+	friend Vec operator + (T const & left, Vec const & right) {
+		Vec out;
+		for (int i = 0; i < n; ++i) { out[i] = left + right[i]; }
+		return out;
+	}
+
 	Vec & operator += (Vec const & right) {
 		for (int i = 0; i < n; ++i) { values[i] += right[i]; }
+		return *this;
+	}
+
+	Vec & operator += (T const & right) {
+		for (int i = 0; i < n; ++i) { values[i] += right; }
 		return *this;
 	}
 
@@ -109,9 +126,25 @@ struct Vec {
 		return out;
 	}
 
+	Vec operator - (T const & right) const {
+		Vec out;
+		for (int i = 0; i < n; ++i) { out[i] = values[i] - right; }
+		return out;
+	}
+
+	friend Vec operator - (T const & left, Vec const & right) {
+		Vec out;
+		for (int i = 0; i < n; ++i) { out[i] = left - right[i]; }
+		return out;
+	}
+
 	Vec & operator -= (Vec const & right) {
 		for (int i = 0; i < n; ++i) { values[i] -= right[i]; }
 		return *this;
+	}
+
+	Vec & operator -= (T const & right) {
+		for (int i = 0; i < n; ++i) { values[i] -= right; }
 	}
 
 	Vec operator - () const {

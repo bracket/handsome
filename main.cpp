@@ -5,6 +5,7 @@
 #include "draw.hpp"
 #include "BitmapWriter.hpp"
 #include "Bezier.hpp"
+#include "Interval.hpp"
 
 #include <stdio.h>
 
