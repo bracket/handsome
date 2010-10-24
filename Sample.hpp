@@ -62,6 +62,14 @@ struct Sample {
 		return *this;
 	}
 
+	Sample operator * (Sample const & right) const
+		{ return Sample(color_ * right.color_); }
+	
+	Sample && operator *= (Sample const & right) {
+		color_ *= right.color_;
+		return *this;
+	}
+	
 	uint32 to_uint32() {
 		return to_uint8(color_[3]) << 24
 			| to_uint8(color_[0]) << 16

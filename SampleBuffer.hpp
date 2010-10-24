@@ -17,10 +17,32 @@ struct SampleBuffer {
 		samples_(new Sample[length * length])
 	{ }
 
+	SampleBuffer(SampleBuffer const & right) :
+		width_(right.width_), height_(right.height_),
+		samples_(new Sample[width_ * height_])
+	{
+		Sample * end = right.samples_ + right.width_ * right.height_,
+			* in = right.samples_,
+			* out = samples_;
+
+		for (; in != end; ++in, ++out) { *in = *out; }
+	}
+
+	SampleBuffer(SampleBuffer && right) :
+		width_(right.width_), height_(right.height_),
+		samples_(right.samples_)
+	{ right.samples_ = 0; }
+
 	~SampleBuffer() { delete [] samples_; }
 
 	Sample & operator () (int i, int j)  { return *(samples_ + j * width_ + i); }
 	Sample const & operator () (int i, int j) const { return *(samples_ + j * width_ + i); }
+
+	Sample & operator () (Vec<2, int> const & v)
+		{ return *(samples_ + v.y() * width_ + v.x()); }
+
+	Sample const & operator () (Vec<2, int> const & v) const
+		{ return *(samples_ + v.y() * width_ + v.x()); }
 
 	int get_width() const { return width_; } 
 	int get_height() const { return height_; }
@@ -80,8 +102,6 @@ struct SampleBuffer {
 	*/
 
 	private:
-		SampleBuffer(SampleBuffer const &); // no copying
-
 		int width_, height_;
 		Sample * samples_;
 };

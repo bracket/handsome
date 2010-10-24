@@ -171,6 +171,17 @@ struct Vec {
 		return *this;
 	}
 
+	Vec operator * (Vec const & right) const {
+		Vec out;
+		for (int i = 0; i < n; ++i) { out[i] = values[i] * right[i]; }
+		return out;
+	}
+
+	Vec && operator *= (Vec const & right) {
+		for (int i = 0; i < n; ++i) { values[i] *= right[i]; }
+		return *this;
+	}
+
 	Vec operator / (T const & right) const {
 		Vec out;
 		for (int i = 0; i < n; ++i) { out[i] = values[i] / right; }
@@ -179,6 +190,17 @@ struct Vec {
 
 	Vec & operator /= (T const & right) {
 		for (int i = 0; i < n; ++i) { values[i] /= right; }
+		return *this;
+	}
+
+	Vec operator / (Vec const & right) const {
+		Vec out;
+		for (int i = 0; i < n; ++i) { out[i] = values[i] / right[i]; }
+		return out;
+	}
+
+	Vec && operator /= (Vec const & right) {
+		for (int i = 0; i < n; ++i) { values[i] /= right[i]; }
 		return *this;
 	}
 

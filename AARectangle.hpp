@@ -7,6 +7,7 @@
 template <class T = float>
 struct AARectangle {
 	template <class> friend struct AARectangle;
+	typedef Vec<2, T> Offset;
 
 	explicit AARectangle(
 		T left = 0, T bottom = 0,
@@ -52,6 +53,30 @@ struct AARectangle {
 
 	Vec<4, T> get_vec() { return Vec<4, T>(get_left(), get_bottom(), get_right(), get_top()); }
 
+	AARectangle && operator += (Offset const & right) {
+		horizontal_ += right.x();
+		vertical_ += right.y();
+		return *this;
+	} 
+
+	AARectangle operator + (Offset const & right) const {
+		return AARectangle(horizontal_ + right.x(), vertical_ + right.y());
+	}
+
+	friend AARectangle operator + (Offset const & left, AARectangle const & right) {
+		return AARectangle(left.x() + right.horizontal_, left.y()  + right.vertical_);
+	};
+
+	AARectangle && operator -= (Offset const & right) {
+		horizontal_ -= right.x();
+		vertical_ -= right.y();
+		return *this;
+	}
+
+	AARectangle operator - (Offset const & right) const {
+		return AARectangle(horizontal_ - right.x(), vertical_ - right.y());
+	}
+
 	AARectangle & operator *= (T const & right) {
 		horizontal_ *= right;
 		vertical_ *= right;
@@ -76,14 +101,28 @@ struct AARectangle {
 		return AARectangle(horizontal_ / right, vertical_ / right);
 	}
 
-	void contract_div(T const & t) {
-		horizontal_.contract_div(t);
-		vertical_.contract_div(t);
+	AARectangle && contract(T const & amount) {
+		horizontal_.contract(amount);
+		vertical_.contract(amount);
+		return *this;
 	}
 
-	void expand_div(T const & t) {
+	AARectangle && expand(T const & amount) {
+		horizontal_.expand(amount);
+		vertical_.expand(amount);
+		return *this;
+	}
+
+	AARectangle && contract_div(T const & t) {
+		horizontal_.contract_div(t);
+		vertical_.contract_div(t);
+		return *this;
+	}
+
+	AARectangle && expand_div(T const & t) {
 		horizontal_.expand_div(t);
 		vertical_.expand_div(t);
+		return *this;
 	}
 
 	float get_area() const { return get_width() * get_height(); }
@@ -106,3 +145,17 @@ inline AARectangle<T> intersection(AARectangle<T> const & lhs, AARectangle<T> co
 		intersection(lhs.get_vertical(), rhs.get_vertical())
 	);
 }
+
+/*
+template <class T>
+inline AARectangle<T> contract_div(AARectangle<T> left, T const & right) {
+	left.contract_div(right);
+	return left;
+}
+
+template <class T>
+inline AARectangle<T> expand_div(AARectangle<T> left, T const & right) {
+	left.expand_div(right);
+	return left;
+}
+*/

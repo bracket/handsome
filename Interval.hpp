@@ -25,22 +25,26 @@ struct Interval {
 	bool empty() const { return get_end() <= get_begin(); }
 	T get_length() const { return get_end() - get_begin(); }
 
-	void contract_left(T const & amount = 1) { extents_[0] += amount; }
-	void contract_right(T const & amount = 1) { extents_[1] -= amount; }
+	Interval && contract_begin(T const & amount = 1) { extents_[0] += amount; return *this; }
+	Interval && contract_end(T const & amount = 1) { extents_[1] -= amount; return *this; }
+	Interval && contract(T const & amount = 1) { contract_begin(amount); contract_end(amount); return *this; }
 
-	void expand_left(T const & amount = 1) { extents_[0] -= amount; }
-	void expand_right(T const & amount = 1) { extents_[1] += amount; }
+	Interval && expand_begin(T const & amount = 1) { extents_[0] -= amount; return *this; }
+	Interval && expand_end(T const & amount = 1) { extents_[1] += amount; return *this; }
+	Interval && expand(T const & amount = 1) { expand_begin(amount); expand_end(amount); }
 
 	bool contains(T const & t) const { return extents_[0] <= t && t < extents_[1]; }
 
-	void contract_div(T const & right) {
+	Interval && contract_div(T const & right) {
 		extents_[0] = cdiv(extents_[0], right);
 		extents_[1] = fdiv(extents_[1], right);
+		return *this;
 	}
 
-	void expand_div(T const & right) {
+	Interval && expand_div(T const & right) {
 		extents_[0] = fdiv(extents_[0], right);
 		extents_[1] = cdiv(extents_[1], right);
+		return *this;
 	}
 
 	Interval operator + (T const & t) const
@@ -76,7 +80,7 @@ struct Interval {
 	Interval operator / (T const & t) const
 		{ return Interval(extents_ / t); }
 	
-	Interval operator /= (T const & t) {
+	Interval & operator /= (T const & t) {
 		extents_ /= t;
 		return *this;
 	}
