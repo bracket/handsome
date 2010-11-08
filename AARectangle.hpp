@@ -53,7 +53,7 @@ struct AARectangle {
 
 	Vec<4, T> get_vec() { return Vec<4, T>(get_left(), get_bottom(), get_right(), get_top()); }
 
-	AARectangle && operator += (Offset const & right) {
+	AARectangle & operator += (Offset const & right) {
 		horizontal_ += right.x();
 		vertical_ += right.y();
 		return *this;
@@ -67,7 +67,7 @@ struct AARectangle {
 		return AARectangle(left.x() + right.horizontal_, left.y()  + right.vertical_);
 	};
 
-	AARectangle && operator -= (Offset const & right) {
+	AARectangle & operator -= (Offset const & right) {
 		horizontal_ -= right.x();
 		vertical_ -= right.y();
 		return *this;
@@ -101,25 +101,25 @@ struct AARectangle {
 		return AARectangle(horizontal_ / right, vertical_ / right);
 	}
 
-	AARectangle && contract(T const & amount) {
+	AARectangle & contract(T const & amount) {
 		horizontal_.contract(amount);
 		vertical_.contract(amount);
 		return *this;
 	}
 
-	AARectangle && expand(T const & amount) {
+	AARectangle & expand(T const & amount) {
 		horizontal_.expand(amount);
 		vertical_.expand(amount);
 		return *this;
 	}
 
-	AARectangle && contract_div(T const & t) {
+	AARectangle & contract_div(T const & t) {
 		horizontal_.contract_div(t);
 		vertical_.contract_div(t);
 		return *this;
 	}
 
-	AARectangle && expand_div(T const & t) {
+	AARectangle & expand_div(T const & t) {
 		horizontal_.expand_div(t);
 		vertical_.expand_div(t);
 		return *this;

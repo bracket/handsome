@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <Integer.hpp>
+#include <iostream>
 
 template <bool, class T = void> struct enable_if { };
 template <class T> struct enable_if<true, T> { typedef T type; };
@@ -177,7 +178,7 @@ struct Vec {
 		return out;
 	}
 
-	Vec && operator *= (Vec const & right) {
+	Vec & operator *= (Vec const & right) {
 		for (int i = 0; i < n; ++i) { values[i] *= right[i]; }
 		return *this;
 	}
@@ -199,7 +200,7 @@ struct Vec {
 		return out;
 	}
 
-	Vec && operator /= (Vec const & right) {
+	Vec & operator /= (Vec const & right) {
 		for (int i = 0; i < n; ++i) { values[i] /= right[i]; }
 		return *this;
 	}
@@ -220,6 +221,14 @@ struct Vec {
 };
 
 template <int n, class T>
+inline std::ostream & operator << (std::ostream & out, Vec<n, T> const & v) {
+	out << "(" << v[0];
+	for (int i = 1; i < n; ++i) { out << ", " << v[i]; }
+	out << ")";
+	return out;
+}
+
+template <int n, class T>
 inline T dot(Vec<n, T> const & left, Vec<n, T> const & right) {
 	T out = 0;
 	for (int i = 0; i < n; ++i) { out += left[i] * right[i]; }
@@ -234,6 +243,16 @@ inline T length_sq(Vec<n, T> const & v) {
 template <int n, class T>
 inline T length(Vec<n, T> const & v) {
 	return sqrt(length_sq(v));
+}
+
+template <int n, class T>
+inline T dist_sq(Vec<n, T> const & from, Vec<n, T> const & to) {
+	return length_sq(to - from);
+}
+
+template <int n, class T>
+inline T dist(Vec<n, T> const & from, Vec<n, T> const & to) {
+	return length(to - from);
 }
 
 template <int n, class T>

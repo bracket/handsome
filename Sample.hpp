@@ -67,7 +67,7 @@ struct Sample {
 	
 	Sample && operator *= (Sample const & right) {
 		color_ *= right.color_;
-		return *this;
+		return static_cast<Sample&&>(*this);
 	}
 	
 	uint32 to_uint32() {

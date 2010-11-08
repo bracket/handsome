@@ -9,6 +9,13 @@ struct MicropolygonMesh;
 struct Bezier {
 	Bezier() { }
 
+	Bezier(Vec2 const & p0, Vec2 const & p1, Vec2 const & p2, Vec2 const & p3) {
+		control_points_[0] = p0;
+		control_points_[1] = p1;
+		control_points_[2] = p2;
+		control_points_[3] = p3;
+	}
+
 	MicropolygonMesh * bust() const;
 
 	Vec2 & operator [] (int i) { return control_points_[i]; }
