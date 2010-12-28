@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Vec.hpp"
-#include "algorithm.hpp"
+#include <Vec.hpp>
+#include <algorithm.hpp>
 
 struct Sample {
 	explicit Sample(

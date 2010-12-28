@@ -1,0 +1,20 @@
+env = Environment();
+
+env['CXX'] = '/opt/local/bin/g++-mp-4.5';
+
+env.AppendUnique(CPPPATH = ['.', '/usr/local/include/boost_1_45_0' ]);
+env.AppendUnique(CPPFLAGS = ['-std=c++0x']);
+#env.AppendUnique(CPPFLAGS = ['-g']);
+env.AppendUnique(CPPFLAGS = ['-O3']);
+
+sources = [
+	'main.cpp',
+	#'Line.cpp',
+	'BitmapWriter.cpp',
+	#'Bezier.cpp',
+	'Filter.cpp',
+	#'CoonsPatch.cpp',
+	'RationalBilinearInverter.cpp',
+];
+
+env.Program('weasel', sources);

@@ -1,54 +1,47 @@
 #pragma once
 
-#include "Vec.hpp"
+#include <VertexType.hpp>
+#include <ScalarType.hpp>
+#include <Vec.hpp>
+#include <algorithm>
 
-#include <stdio.h>
+template <class> struct MicropolygonMesh;
 
-struct MicropolygonMesh;
-
+template <class VertexType_>
 struct Bezier {
+	typedef VertexType_ VertexType;
+	typedef typename ScalarType<VertexType>::type ScalarType;
+
 	Bezier() { }
 
-	Bezier(Vec2 const & p0, Vec2 const & p1, Vec2 const & p2, Vec2 const & p3) {
-		control_points_[0] = p0;
-		control_points_[1] = p1;
-		control_points_[2] = p2;
-		control_points_[3] = p3;
+	Bezier(VertexType const & p0, VertexType const & p1, VertexType const & p2, VertexType const & p3) {
+		control_points_ = { p0, p1, p2, p3 };
 	}
 
-	MicropolygonMesh * bust() const;
+	MicropolygonMesh<VertexType> * bust() const;
 
-	Vec2 & operator [] (int i) { return control_points_[i]; }
-	Vec2 const & operator [] (int i) const { return control_points_[i]; }
+	VertexType & operator [] (int i) { return control_points_[i]; }
+	VertexType const & operator [] (int i) const { return control_points_[i]; }
 
-	Vec2 operator () (float t) const {
-		Bezier b = *this;
-		float tp = 1.0f - t;
+	VertexType operator () (ScalarType u) const {
+		VertexType p[] = {
+			interpolate(u, control_points_[0], control_points_[1]),
+			interpolate(u, control_points_[1], control_points_[2]),
+			interpolate(u, control_points_[2], control_points_[3])
+		};
 
-		for  (int end = 3; end > 0; --end) {
-			for (int i = 0; i < end; ++i)
-				{ b[i] = tp * b[i] + t * b[i+1]; }
-		}
+		VertexType * begin = p, * end = p + 3;
 
-		return b[0];
-	}
-
-	Bezier split_off_right(float at) {
-		Bezier right;
-		float atp = 1.0f - at;
-
-		right[3] = control_points_[3];
-
-		for (int start = 1; start < 4; ++start) {
-			for (int i = 3; i >= start; --i) {
-				control_points_[i] = atp * control_points_[i-1] + at * control_points_[i];
+		for (; begin != end; --end) {
+			VertexType * prev = begin, * next = begin + 1;
+			for (; next != end; ++prev, ++next) {
+				*prev = interpolate(u, *prev, *next);
 			}
-			right[3 - start] = control_points_[3];
 		}
 
-		return right;
+		return p[0];
 	}
 
 	private:
-		Vec2 control_points_[4];
+		VertexType control_points_[4];
 };

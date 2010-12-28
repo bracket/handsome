@@ -1,27 +1,20 @@
 #pragma once
 
-#include "Vec.hpp"
+#include <ScalarType.hpp>
 
-struct MicropolygonMesh;
-
+template <class VertexType_>
 struct Line {
-	Line() { }
+	typedef VertexType_ VertexType;
+	typedef typename ScalarType<VertexType>::type ScalarType;
 
-	explicit Line(Vec2 const & start, Vec2 const & end)
-		: start_(start), end_(end) { }
-	
-	Vec2 & get_start() { return start_; }
-	Vec2 const & get_start() const { return start_; }
+	Line(VertexType const & start, VertexType const & end)
+		: start_(start), end_(end)
+	{ }
 
-	Vec2 & get_end() { return end_; }
-	Vec2 const & get_end() const { return end_; }
-
-	Vec2 get_direction() const { return get_end() - get_start(); }
-	
-	MicropolygonMesh * bust() const;
+	VertexType operator () (ScalarType u) const {
+		return interpolate(u, start_, end_);
+	}
 
 	private:
-		Vec2 start_, end_;
+		VertexType start_, end_;
 };
-
-inline float length_sq(Line const & l) { return length_sq(l.get_direction()); }

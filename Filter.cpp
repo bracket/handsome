@@ -90,17 +90,5 @@ void convolve_into(
 	int out_sample_rate
 )
 {
-	/*
-	float d = 1.0f / static_cast<float>(cache.get_sample_rate());
-	d *= d;
-
-	SampleBuffer kernel(cache.get_sample_rate(), cache.get_sample_rate());
-	for (int j = 0; j < kernel.get_height(); ++j) {
-		for (int i = 0; i < kernel.get_width(); ++i) {
-			kernel(i, j) = Sample(d, d, d, d);
-		}
-	}
-	*/
-
 	cache.for_each_tile(ConvolveTile(out, kernel, out_sample_rate));
 }

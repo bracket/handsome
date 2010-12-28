@@ -3,6 +3,8 @@
 #include <math.h>
 #include <Integer.hpp>
 #include <iostream>
+#include <ScalarType.hpp>
+#include <VertexType.hpp>
 
 template <bool, class T = void> struct enable_if { };
 template <class T> struct enable_if<true, T> { typedef T type; };
@@ -25,26 +27,26 @@ struct Vec {
 		for (int i = 0; i < n; ++i) { values[i] = static_cast<T>(array[i]); }
 	}
 
-	template <class U>
-	explicit Vec(U const & x,
-		typename enable_if<(1 <= n), U>::type* = 0)
+	template <class T0>
+	explicit Vec(T0 const & x,
+		typename enable_if<(1 <= n), T0>::type * = 0)
 	{
 		clear(); 
 		values[0] = x;
 	}
 
-	template <class U>
-	Vec(U const & x, U const & y,
-		typename enable_if<(2 <= n), U>::type* = 0)
+	template <class T0, class T1>
+	Vec(T0 const & x, T1 const & y,
+		typename enable_if<(2 <= n), T0>::type * = 0)
 	{
 		clear();
 		values[0] = x;
 		values[1] = y;
 	}
 
-	template <class U>
-	Vec(U const & x, U const & y, U const & z,
-		typename enable_if<(3 <= n), U>::type* = 0)
+	template <class T0, class T1, class T2>
+	Vec(T0 const & x, T1 const & y, T2 const & z,
+		typename enable_if<(3 <= n), T0>::type * = 0)
 	{
 		clear();
 		values[0] = x;
@@ -52,10 +54,10 @@ struct Vec {
 		values[2] = z;
 	}
 
-	template <class U>
-	Vec(U const & x, U const & y,
-		U const & z, U const & w,
-		typename enable_if<(4 <= n), U>::type *  = 0)
+	template <class T0, class T1, class T2, class T3>
+	Vec(T0 const & x, T1 const & y,
+		T2 const & z, T3 const & w,
+		typename enable_if<(4 <= n), T0>::type * = 0)
 	{
 		clear();
 		values[0] = x;
@@ -220,6 +222,8 @@ struct Vec {
 	T values[n];
 };
 
+template <class T, int n> struct ScalarType<Vec<n, T> > { typedef T type; };
+
 template <int n, class T>
 inline std::ostream & operator << (std::ostream & out, Vec<n, T> const & v) {
 	out << "(" << v[0];
@@ -329,3 +333,16 @@ inline Vec<n, int> fdiv(Vec<n, int> const & left, int const & right) {
 	for (int i = 0; i < n; ++i) { out[i] = fdiv(left[i], right); }
 	return out;
 }
+
+template <class T, int n>
+struct interpolate_impl<Vec<n, T> > {
+	static inline Vec<n, T> call(T const & t, Vec<n, T> const & left, Vec<n, T> const & right) {
+		return (static_cast<T>(1.0) - t) * left + t * right;
+	}
+};
+
+inline Vec4 rhw_position(Vec2 const & v) { return Vec4(v.x(), v.y(), 1.0f, 1.0f); }
+
+inline Vec4 rhw_position(Vec3 const & v) { return Vec4(v.x(), v.y(), v.z(), 1.0f); }
+
+inline Vec4 const & rhw_position(Vec4 const & v) { return v; }

@@ -1,41 +1,51 @@
 #pragma once
 
-#include "AARectangle.hpp"
-#include "Fragment.hpp"
-#include "Integer.hpp"
-#include "TileCache.hpp"
-#include "Vec.hpp"
+#include <AARectangle.hpp>
+#include <Fragment.hpp>
+#include <Integer.hpp>
+#include <RationalBilinearInverter.hpp>
+#include <TileCache.hpp>
+#include <Vec.hpp>
+#include <VertexType.hpp>
 
+#include <algorithm>
 #include <math.h>
-#include <stdio.h>
 
+template <class VertexType>
 struct Micropolygon {
 	explicit Micropolygon(
-		Vec2 const & v0 = Vec2(),
-		Vec2 const & v1 = Vec2(),
-		Vec2 const & v2 = Vec2(),
-		Vec2 const & v3 = Vec2()
-	) {
-		points_[0] = v0;
-		points_[1] = v1;
-		points_[2] = v2;
-		points_[3] = v3;
+		VertexType const & p00,
+		VertexType const & p10,
+		VertexType const & p11,
+		VertexType const & p01
+	)
+	{
+		vertices_ = { &p00, &p10, &p01, &p11 };
+
+		Vec4 p[] = {
+			rhw_position(p00), rhw_position(p10),
+			rhw_position(p01), rhw_position(p11)
+		};
+
+		projected_ = {
+			Vec2(p[0].x(), p[0].y()) / (p[0].z() * p[0].w()),
+			Vec2(p[1].x(), p[1].y()) / (p[1].z() * p[1].w()),
+			Vec2(p[2].x(), p[2].y()) / (p[2].z() * p[2].w()),
+			Vec2(p[3].x(), p[3].y()) / (p[3].z() * p[3].w())
+		};
 	}
 
-	float get_signed_area() const {
-		// 	return bottom_edge.x() * left_edge.y() - bottom_edge.y() * left_edge.x();
+	bool triangle_contains(Vec2 const & A, Vec2 const & B, Vec2 const & C, Vec2 const & x) const {
+		return cross(B - A, x - A) >= 0.0f
+			&& cross(C - B, x - B) >= 0.0f
+			&& cross(A - C, x - C) >= 0.0f
+		;
 	}
-	
-	float get_signed_area(Vec2 const & a, Vec2 const & b) const {
-		return a.x() * b.y() - a.y() * b.x();
-	}
-
-	// float get_area() const { return fabsf(get_signed_area()); }
 
 	AARectangle<float> get_bounds() const {
-		AARectangle<float> r(points_->x(), points_->y(), points_->x(), points_->y());
+		AARectangle<float> r(projected_[0].x(), projected_[0].y(), projected_[0].x(), projected_[0].y());
 
-		for (Vec2 const * p = points_ + 1; p != points_ + 4; ++p) {
+		for (Vec2 const * p = projected_ + 1; p != projected_ + 4; ++p) {
 			if (p->y() > r.get_top()) { r.get_top() = p->y(); }
 			else if (p->y() < r.get_bottom()) { r.get_bottom() = p->y(); }
 
@@ -46,24 +56,9 @@ struct Micropolygon {
 		return r;
 	}
 
-	float signed_contains_origin(Vec2 const & a, Vec2 const & b, Vec2 const & c) const {
-		bool ab = is_left_of_or_on(-a, b - a),
-			bc = is_left_of_or_on(-b, c - b);
-		
-		if (ab != bc) { return 0.0f; }
-		bool ca = is_left_of_or_on(-c, a - c);
-
-		return ca ? (ab ? 1.0f : 0.0f) : (!ab ? -1.0f : 0.0f);
-	}
-
 	bool contains(Vec2 const & pt) const {
-		float s = signed_contains_origin(points_[0] - pt, points_[1] - pt, points_[2] - pt);
-		if (s < 0.0f) { return false; }
-
-		float t = signed_contains_origin(points_[0] - pt, points_[2] - pt, points_[3] - pt);
-		if (t < 0.0f) { return false; }
-
-		return s > 0.0f || t > 0.0f;
+		return triangle_contains(projected_[0], projected_[1], projected_[3], pt)
+			|| triangle_contains(projected_[0], projected_[3], projected_[2], pt);
 	}
 
 	template <class F>
@@ -80,12 +75,22 @@ struct Micropolygon {
 			float y = static_cast<float>(sample_y) * isr;
 			for (int sample_x = bounds[0]; sample_x < bounds[2]; ++sample_x) {
 				Vec2 pt(static_cast<float>(sample_x) * isr, y);
-				if (!contains(pt)) { continue; }
+				//if (!contains(pt)) { continue; }
 
-				Fragment frag = {
-					pt, Vec2(),
-					Vec<2, int>(sample_x, sample_y), sample_rate
-				};
+				RationalBilinearInverter rbi(pt,
+					rhw_position(*vertices_[0]), rhw_position(*vertices_[1]),
+					rhw_position(*vertices_[2]), rhw_position(*vertices_[3])
+				);
+
+				if (rbi.empty()) { continue; }
+
+				Vec2 const & v = rbi.front().second;
+
+				VertexType b = interpolate(v.x(), *vertices_[0], *vertices_[1]),
+					t = interpolate(v.x(), *vertices_[2], *vertices_[3]),
+					p = interpolate(v.y(), b, t);
+
+				Fragment<VertexType> frag(p, Vec<2, int>(sample_x, sample_y), sample_rate);
 
 				f(frag);
 			}
@@ -93,5 +98,6 @@ struct Micropolygon {
 	}
 
 	private:
-		Vec2 points_[4];
+		VertexType const * vertices_[4];
+		Vec2 projected_[4];
 };
