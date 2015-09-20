@@ -1,5 +1,5 @@
 """
-handsome: Rasterizer for 2D image primitives based off of NumPy
+handsome: Rasterizer for 2D and 3D image primitives based off of NumPy
 """
 
 from setuptools import setup;
