@@ -1,4 +1,5 @@
-from handsome.Tile import *
+from handsome.Tile import Tile
+from handsome.Interval import Interval
 
 def test_tile():
     tile = Tile((0, 0), (100, 200))

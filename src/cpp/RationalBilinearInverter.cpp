@@ -1,7 +1,7 @@
-#include <QuadraticSolver.hpp>
-#include <RationalBilinearInverter.hpp>
-#include <cmath>
+#include "QuadraticSolver.hpp"
+#include "RationalBilinearInverter.hpp"
 
+#include <cmath>
 #include <iostream>
 
 namespace {

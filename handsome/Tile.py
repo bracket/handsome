@@ -1,21 +1,8 @@
-__all__ =  [ 'Pixel', 'FloatPixel', 'Interval', 'Tile' ]
+__all__ =  [ 'Tile' ]
 
+from .Interval import Interval
+from .Pixel import Pixel
 import numpy as np
-
-def pixel_type(dtype):
-    return np.dtype(
-        [
-            ('R', np.uint8),
-            ('G', np.uint8),
-            ('B', np.uint8),
-            ('A', np.uint8),
-        ],
-        align=True
-    )
-
-
-Pixel = pixel_type(np.uint8)
-FloatPixel = pixel_type(np.float32)
 
 class Interval(object):
     '''Interval - Arbitrary half-closed interval of the form [start, end)'''

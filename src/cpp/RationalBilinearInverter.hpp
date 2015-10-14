@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Vec.hpp"
+
 #include <utility>
-#include <Vec.hpp>
 
 struct RationalBilinearInverter {
 	typedef std::pair<float, Vec2> value_type;

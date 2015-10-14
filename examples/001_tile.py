@@ -1,4 +1,5 @@
-from handsome.Tile import Pixel, Tile
+from handsome.Pixel import Pixel
+from handsome.Tile import Tile
 from handsome.util import save_array_as_image
 import numpy as np
 

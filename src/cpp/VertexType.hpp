@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ScalarType.hpp>
+#include "ScalarType.hpp"
 
 template <int n, class T> struct Vec;
 template <class VertexType> struct interpolate_impl;
