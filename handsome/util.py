@@ -18,6 +18,7 @@ def rotate_left(p):
 def normalize(vector):
     return vector / math.sqrt(sum(vector * vector))
 
+
 def make_color_grammar():
     import re
 

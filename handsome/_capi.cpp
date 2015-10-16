@@ -1,15 +1,26 @@
 #include "RationalBilinearInverter.hpp"
+#include <iostream>
 
 struct coordinate {
   float x, y;
   
   operator Vec2() const { return Vec2(x, y); }
+
+  friend std::ostream & operator << (std::ostream & out, coordinate const & c) {
+    out << "(" << c.x << ", " << c.y << ")";
+    return out;
+  }
 };
 
 struct point {
   float x, y, z, w;
 
   operator Vec4() const { return Vec4(x, y, z, w); }
+
+  friend std::ostream & operator << (std::ostream & out, point const & p) {
+    out << "(" << p.x << ", " << p.y << ", " << p.z << ", " << p.w << ")";
+    return out;
+  }
 };
 
 struct Pixel {

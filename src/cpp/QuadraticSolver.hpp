@@ -11,7 +11,9 @@ struct QuadraticSolver {
 	typedef T * iterator;
 	typedef T const * const_iterator;
 
-	QuadraticSolver(T a, T b, T c) : size_(0) { solve(a, b, c); };
+	QuadraticSolver(T const & a, T const & b, T const & c)
+      : size_(0)
+    { solve(a, b, c); }
 
 	QuadraticSolver(QuadraticSolver const & right) : size_(right.size_)
 		{ std::copy(right.begin(), right.end(), begin()); }
@@ -28,7 +30,7 @@ struct QuadraticSolver {
 	size_type size() const { return size_; }
 
 	private:
-		void solve(T a , T b, T c) {
+		void solve(T const & a , T const & b, T const & c) {
 			if (a == 0) { solve_linear(b, c); }
 			else { solve_quadratic(a, b, c); }
 		}

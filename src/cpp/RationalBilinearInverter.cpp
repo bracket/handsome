@@ -90,11 +90,15 @@ void RationalBilinearInverter::solve(
 		}
 	}
 
-	QuadraticSolver<double> q(
-		m[0][5] - m[1][5] * m[2][5],
-		m[0][4] - m[1][4] * m[2][5] - m[1][5] * m[2][4],
-		- m[1][4] * m[2][4]
-	);
+    double quad_a = m[0][5] - m[1][5] * m[2][5],
+           quad_b = m[0][4] - m[1][4] * m[2][5] - m[1][5] * m[2][4],
+           quad_c = - m[1][4] * m[2][4];
+
+    if (-1e-3 < quad_a && quad_a < 1e-3) { quad_a = 0.; }
+    if (-1e-3 < quad_b && quad_b < 1e-3) { quad_b = 0.; }
+    if (-1e-3 < quad_c && quad_c < 1e-3) { quad_c = 0.; }
+
+	QuadraticSolver<double> q(quad_a, quad_b, quad_c);
 
 	for (auto it = q.begin(); it != q.end(); ++it) {
 		double D = *it,

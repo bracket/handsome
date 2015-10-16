@@ -1,46 +1,9 @@
 __all__ =  [ 'Tile' ]
 
+from .Coordinate import Coordinate
 from .Interval import Interval
 from .Pixel import Pixel
 import numpy as np
-
-class Interval(object):
-    '''Interval - Arbitrary half-closed interval of the form [start, end)'''
-
-    def __init__(self, start, end):
-        self.start = start
-        self.end = end
-
-    def __call__(self, value):
-        return (1. - value) * self.start + value * self.end
-
-    def __str__(self):
-        return 'Interval({self.start}, {self.end})'.format(self=self)
-
-    def __repr__(self):
-        return 'Interval({self.start}, {self.end})'.format(self=self)
-
-    def __eq__(self, right):
-        return self.start == right.start and self.end == right.end
-
-    def contains(self, value):
-        return self.start <= value < self.end
-
-    def __intersection(self, right):
-        return (
-            max(self.start, right.start),
-            min(self.end, right.end)
-        )
-
-    def overlaps(self, other):
-        start, end = self.__intersection(other)
-        return start < end
-
-    def intersection(self, other):
-        start, end = self.__intersection(other)
-
-        if start < end: return Interval(start, end)
-        else: return None
 
 
 class Tile:
@@ -58,6 +21,7 @@ class Tile:
         self.origin     = origin
         self.horizontal = Interval(origin[0], origin[0] + self.shape[0])
         self.vertical   = Interval(origin[1], origin[1] + self.shape[1])
+        self.__coordinate_image = None
 
 
     def contains_point(self, point):
@@ -124,9 +88,12 @@ def make_coordinate_image(origin, shape):
     xs = np.arange(origin[0], origin[0] + shape[0], dtype=np.float32)
     ys = np.arange(origin[1] + shape[1] - 1, origin[1] - 1, -1, dtype=np.float32)
 
-    out = np.zeros(list(shape) + [ 2 ], dtype=np.float32)
+    out = np.zeros(list(shape), dtype=Coordinate, order='F')
 
-    for x in range(shape[1]): out[:,x,0] = xs 
-    for y in range(shape[0]): out[y,:,1] = ys
+    for x in range(shape[0]):
+        out[x,:]['y'] = ys
+
+    for y in range(shape[1]):
+        out[:,y]['x'] = xs
 
     return out

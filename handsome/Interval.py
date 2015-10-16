@@ -35,5 +35,7 @@ class Interval(object):
     def intersection(self, other):
         start, end = self.__intersection(other)
 
-        if start < end: return Interval(start, end)
-        else: return None
+        if start < end:
+            return Interval(start, end)
+        else:
+            return None
