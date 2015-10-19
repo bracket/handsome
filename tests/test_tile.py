@@ -1,6 +1,7 @@
 from handsome.Coordinate import Coordinate
 from handsome.Interval import Interval
 from handsome.Tile import Tile
+from handsome.Pixel import FloatPixel, array_view
 
 import numpy as np
 
@@ -30,3 +31,33 @@ def test_coordinate_image():
     ], dtype=Coordinate).T
 
     np.testing.assert_array_equal(expected, actual)
+
+def test_coordinate_image_sample_rate():
+    tile = Tile((0, 0), (3, 2), sample_rate = 2)
+    actual = tile.coordinate_image
+
+    expected = np.array([
+        [ (0., 1.5), (.5, 1.5), (1., 1.5), (1.5, 1.5), (2., 1.5), (2.5, 1.5), ],
+        [ (0., 1.) , (.5, 1.) , (1., 1.) , (1.5, 1.) , (2., 1.) , (2.5, 1.) , ],
+        [ (0., .5) , (.5, .5) , (1., .5) , (1.5, .5) , (2., .5) , (2.5, .5) , ],
+        [ (0., 0.) , (.5, 0.) , (1., 0.) , (1.5, 0.) , (2., 0.) , (2.5, 0.) , ],
+    ], dtype=Coordinate).T
+
+    np.testing.assert_array_equal(expected, actual)
+
+def test_downsample():
+    tile = Tile((0, 0), (2,2), dtype=FloatPixel, sample_rate=2)
+
+    tile.buffer[:,:]['R'] = tile.coordinate_image['x']
+    tile.buffer[:,:]['G'] = tile.coordinate_image['y']
+
+    expected = np.array(
+        [
+            [ (.25, 1.25, 0, 0.), (1.25, 1.25, 0., 0.) ],
+            [ (.25, .25 , 0, 0.), (1.25, .25 , 0., 0.) ],
+        ],
+        dtype=np.float32
+    ).transpose((1, 0, 2))
+
+    actual = tile.downsample(1)
+    np.testing.assert_array_equal(expected, array_view(actual))

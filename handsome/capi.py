@@ -3,6 +3,7 @@ import ctypes
 
 __all__ = [
     'fill',
+    'fill_float',
     'generate_numpy_begin',
     'generate_numpy_span',
 ]
@@ -34,6 +35,7 @@ def generate_numpy_span(array):
 
 DLL_FUNCS = [
     'fill',
+    'fill_float',
 ]
 
 def update_globals():
