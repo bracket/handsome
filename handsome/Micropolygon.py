@@ -47,7 +47,6 @@ class Micropolygon:
 
             d = A + B + C + D
 
-
             u = (B + D) / d
             v = (C + D) / d
 

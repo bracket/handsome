@@ -42,7 +42,7 @@ setup(
     name='handsome',
     version=find_version('handsome/__init__.py'),
     author='Stephen [Bracket] McCray',
-    author_email='stephen.mccray@rentrak.com',
+    author_email='mcbracket@gmail.com',
     packages=['handsome'],
     classifiers=[
         'Development Status :: 4 - Beta'
