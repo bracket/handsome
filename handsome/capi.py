@@ -1,12 +1,11 @@
-import os
-import ctypes
-
 __all__ = [
-    'fill',
-    'fill_float',
+    'fill_micropolygon_mesh',
     'generate_numpy_begin',
     'generate_numpy_span',
 ]
+
+import os
+import ctypes
 
 def load_library():
     dir_path = os.path.dirname(__file__)
@@ -34,8 +33,7 @@ def generate_numpy_span(array):
     return begin, end
 
 DLL_FUNCS = [
-    'fill',
-    'fill_float',
+    'fill_micropolygon_mesh',
 ]
 
 def update_globals():

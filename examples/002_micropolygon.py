@@ -1,11 +1,11 @@
 from handsome.Line import Line
-from handsome.Micropolygon import Micropolygon
+from handsome.MicropolygonMesh import MicropolygonMesh, Vertex
 from handsome.Pixel import Pixel, FloatPixel, array_view, pixel_view
 from handsome.Tile import Tile
 from handsome.util import point, save_array_as_image, parse_color
 import numpy as np
 
-from handsome.capi import fill_float, generate_numpy_begin
+from handsome.capi import fill_micropolygon_mesh, generate_numpy_begin
 
 def main():
     colors = {
@@ -23,38 +23,27 @@ def main():
     image = Tile((0, 0), (512, 512), sample_rate = 4, dtype=FloatPixel)
     image.buffer[:,:] = float_colors['white']
 
+    tile_width, tile_height = image.buffer.shape
 
-    buffer = image.buffer
-    coordinate_image = image.coordinate_image
+    mesh = MicropolygonMesh((1,1))
+    mesh_width, mesh_height = mesh.buffer.shape
 
-    width, height = buffer.shape
+    buffer = np.array([
+            [ (384, 496, 1, 1, 2 , 0, 0, 1), (496, 496, 1, 1, 0, 0, 0, 1) ],
+            [ (16 , 16 , 1, 1, .5, 0, 0, 1), (128, 16 , 1, 1, 0, 0, 0, 1) ],
+        ],
+        dtype=np.float32
+    )
 
-    polygons = [
-         Micropolygon(
-            point(16,   16),
-            point(128, 16),
-            point(512 - 128, 512 - 16),
-            point(512 - 16, 512 - 16),
-        ),
-         Micropolygon(
-            point(512 - 128, 16),
-            point(512 - 16, 16),
-            point(16, 512 - 16),
-            point(128, 512 - 16),
-        )
-    ]
+    mesh.buffer.view(dtype=(np.float32, 8))[:] = buffer
 
-
-    for p in polygons:
-        fill_float(
-            generate_numpy_begin(p.points[0][0]),
-            generate_numpy_begin(p.points[0][1]),
-            generate_numpy_begin(p.points[1][0]),
-            generate_numpy_begin(p.points[1][1]),
-            width, height,
-            generate_numpy_begin(coordinate_image),
-            generate_numpy_begin(image.buffer)
-        )
+    fill_micropolygon_mesh(
+        mesh_width, mesh_height,
+        generate_numpy_begin(mesh.buffer),
+        tile_width, tile_height,
+        generate_numpy_begin(image.coordinate_image),
+        generate_numpy_begin(image.buffer)
+    )
 
     buffer = array_view(image.downsample(1))
     buffer = np.clip(buffer, 0., 1.)
