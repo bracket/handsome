@@ -20,7 +20,9 @@ def main():
         colors[key] = np.array([ color ], dtype=Pixel)
         float_colors[key] = np.array(tuple(c / 255. for c in color), dtype=FloatPixel)
 
-    image = Tile((0, 0), (512, 512), sample_rate = 4, dtype=FloatPixel)
+    # image = Tile((0, 0), (512, 512), sample_rate = 4, dtype=FloatPixel)
+    # image = Tile((0, 0), (1024, 1024), sample_rate = 4, dtype=FloatPixel)
+    image = Tile((0, 0), (512, 512), sample_rate = 8, dtype=FloatPixel)
     image.buffer[:,:] = float_colors['white']
 
     tile_width, tile_height = image.buffer.shape
@@ -28,9 +30,21 @@ def main():
     mesh = MicropolygonMesh((1,1))
     mesh_width, mesh_height = mesh.buffer.shape
 
+    margin = 16
+    width = 128
+    right  = image.shape[0]
+    top    = image.shape[1]
+
+
     buffer = np.array([
-            [ (384, 496, 1, 1, 2 , 0, 0, 1), (496, 496, 1, 1, 0, 0, 0, 1) ],
-            [ (16 , 16 , 1, 1, .5, 0, 0, 1), (128, 16 , 1, 1, 0, 0, 0, 1) ],
+            [
+                (right - margin - width, top - margin, 1, 1, 1.5, 0, 0, 1),
+                (right - margin        , top - margin, 1, 1, 0  , 0, 0, 1)
+            ],
+            [
+                (margin        , margin, 1, 1, .5, 0, 0, 1),
+                (margin + width, margin, 1, 1, 0 , 0, 0, 1)
+            ],
         ],
         dtype=np.float32
     )
