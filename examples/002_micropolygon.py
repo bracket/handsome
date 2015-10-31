@@ -2,10 +2,9 @@ from handsome.Line import Line
 from handsome.MicropolygonMesh import MicropolygonMesh, Vertex
 from handsome.Pixel import Pixel, FloatPixel, array_view, pixel_view
 from handsome.Tile import Tile
+from handsome.capi import fill_micropolygon_mesh, generate_numpy_begin
 from handsome.util import point, save_array_as_image, parse_color
 import numpy as np
-
-from handsome.capi import fill_micropolygon_mesh, generate_numpy_begin
 
 def main():
     colors = {
@@ -20,9 +19,7 @@ def main():
         colors[key] = np.array([ color ], dtype=Pixel)
         float_colors[key] = np.array(tuple(c / 255. for c in color), dtype=FloatPixel)
 
-    # image = Tile((0, 0), (512, 512), sample_rate = 4, dtype=FloatPixel)
-    # image = Tile((0, 0), (1024, 1024), sample_rate = 4, dtype=FloatPixel)
-    image = Tile((0, 0), (512, 512), sample_rate = 8, dtype=FloatPixel)
+    image = Tile((0, 0), (512, 512), sample_rate=4, dtype=FloatPixel)
     image.buffer[:,:] = float_colors['white']
 
     tile_width, tile_height = image.buffer.shape
