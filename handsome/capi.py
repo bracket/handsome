@@ -1,5 +1,6 @@
 __all__ = [
     'fill_micropolygon_mesh',
+    'fill_bounds_buffer',
     'generate_numpy_begin',
     'generate_numpy_span',
 ]
@@ -34,6 +35,7 @@ def generate_numpy_span(array):
 
 DLL_FUNCS = [
     'fill_micropolygon_mesh',
+    'fill_bounds_buffer',
 ]
 
 def update_globals():

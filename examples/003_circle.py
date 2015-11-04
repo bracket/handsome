@@ -208,6 +208,7 @@ def render_mesh(mesh, tile):
     fill_micropolygon_mesh(
         mesh_width, mesh_height,
         generate_numpy_begin(mesh.buffer),
+        generate_numpy_begin(mesh.bounds),
         tile_width, tile_height,
         generate_numpy_begin(tile.coordinate_image),
         generate_numpy_begin(tile.buffer)
