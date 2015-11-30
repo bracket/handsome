@@ -25,6 +25,7 @@ Vertex = np.dtype([
 class MicropolygonMesh:
     def __init__(self, shape, vertex_type=Vertex):
         self.shape = shape
+        self.__outer_bounds = None
         self.__buffer = None
         self.__bounds = None
 
@@ -46,11 +47,17 @@ class MicropolygonMesh:
         buffer = self.__buffer
         self.__bounds = np.zeros(self.shape, dtype=Position, order='F')
 
-        fill_bounds_buffer(
+        outer_bounds = fill_bounds_buffer(
             self.shape[0] + 1,
             self.shape[1] + 1,
             generate_numpy_begin(buffer),
             generate_numpy_begin(self.__bounds),
         )
 
+        self.__outer_bounds = outer_bounds
         return self.__bounds
+
+    @property
+    def outer_bounds(self):
+        bounds = self.bounds
+        return self.__outer_bounds

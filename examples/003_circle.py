@@ -1,22 +1,27 @@
 from handsome.Micropolygon import Micropolygon
 from handsome.MicropolygonMesh import MicropolygonMesh, Position
-from handsome.Tile import Tile
-from handsome.util import save_array_as_image, point, parse_color
 from handsome.Pixel import FloatPixel, array_view, pixel_view
-import numpy as np
+from handsome.Tile import Tile
+from handsome.TileCache import TileCache
 from handsome.capi import fill_micropolygon_mesh, generate_numpy_begin
+from handsome.util import save_array_as_image, point, parse_color
+import numpy as np
+
 
 def constant(f):
     return f()
 
+
 @constant
 def palette():
     colors = {
-        'white' : '#fff',
-        'red'   : '#7f0000',
-        'black' : '#000',
-        # 'blue'  : '#0000bf',
-        'blue'  : '#0000ff',
+        'clear'  : '#0000',
+        'white'  : '#fff',
+        'red'    : '#7f0000',
+        'black'  : '#000',
+        'blue' : '#0000bf',
+        # 'blue'   : '#0000ff',
+        'orange' : '#FF9701'
     }
 
     colors = {
@@ -34,7 +39,7 @@ def circle(center, radius):
 
     def point_from_polar(u, v):
         return point(
-            center[0] + radius * u * cos(v * tau), 
+            center[0] + radius * u * cos(v * tau),
             center[1] + radius * u * sin(v * tau),
             1, 1
         )
@@ -42,28 +47,96 @@ def circle(center, radius):
     return point_from_polar
 
 
+def generate_meshes(surface):
+    splits = 16
+
+    u_steps = 256
+    v_steps = 1024
+
+    u_step_size = int(u_steps / splits)
+    v_step_size = int(v_steps / splits)
+
+
+    out = []
+    for u in range(0, u_steps, u_step_size):
+        for v in range(0, v_steps, v_step_size):
+            mesh = generate_mesh_from_surface(
+                surface,
+                (u_step_size, v_step_size),
+                (u / u_steps, (u + u_step_size) / u_steps),
+                (v / v_steps, (v + v_step_size) / v_steps),
+            )
+
+            out.append(mesh)
+
+    return out
+
+
+def generate_meshes_(surface):
+    out = [
+        generate_mesh_from_surface(
+            surface,
+            (1, 8),
+            (0., 1.),
+            (0., 1.)
+        )
+    ]
+
+    return out
+
+
 def main():
+    render_frame(29)
+
+
+def render_frame(frame_no):
+    from math import sin, pi
+    tau = 2. * pi
+
     image = Tile((0, 0), (512,512), 4, dtype=FloatPixel)
     image.buffer[:,:] = palette['white'].view(dtype=FloatPixel)
 
     center = (256, 256)
     radius = 100
-    
+
     surface = circle(center, radius)
 
-    # mesh = generate_mesh(center, radius)
-    mesh = generate_mesh_from_surface(surface, (1, 64), 1., 1.)
-    image = render_mesh(mesh, image)
+    global transform
+
+    transform = np.array(
+        [
+            [ 1., .0 ],
+            [ .5 * sin(tau * frame_no / 60.), 1. ]
+        ],
+        dtype=np.float32
+    )
+
+    meshes = generate_meshes(surface)
+
+    for mesh in meshes:
+        cache = render_mesh(mesh)
+        cache.composite_into(image)
 
     buffer = array_view(image.downsample(1))
     buffer = np.clip(buffer, 0., 1.)
     buffer = (255. * buffer).astype(dtype=np.uint8)
 
-    save_array_as_image(pixel_view(buffer), 'render/003_circle.tiff', 'RGBA')
+    path = 'render/003/frame_{:03}.tiff'.format(frame_no)
+    save_array_as_image(pixel_view(buffer), path, 'RGBA')
 
-def generate_mesh_from_surface(surface, shape, max_u, max_v):
-    u_steps = np.linspace(0.0001, max_u, shape[0] + 1, endpoint=True, dtype=np.float32)
-    v_steps = np.linspace(0, max_v, shape[1] + 1, endpoint=True, dtype=np.float32)
+
+def generate_mesh_from_surface(surface, shape, u_range, v_range):
+    u_start, u_end = u_range
+    v_start, v_end = v_range
+
+    if u_start == 0.:
+        u_start = 0.0001
+
+    if v_start == 0.:
+        v_start = 0.0001
+
+    u_steps = np.linspace(u_start, u_end, shape[0] + 1, endpoint=True, dtype=np.float32)
+    v_steps = np.linspace(v_start, v_end, shape[1] + 1, endpoint=True, dtype=np.float32)
 
     points = [
         [ surface(u, v) for u in u_steps ]
@@ -76,12 +149,11 @@ def generate_mesh_from_surface(surface, shape, max_u, max_v):
     end_color = palette['black']
 
     colors = [
-        [ (1 - v) * start_color + v * end_color for u in u_steps ]
-        for v in v_steps
+        [ shader(u, v) for u in u_steps ] for v in v_steps
     ]
 
     colors = np.squeeze(np.array(colors).view(FloatPixel)).T
-    
+
     mesh = MicropolygonMesh(shape)
 
     mesh.buffer[:,:]['position'] = points
@@ -89,133 +161,56 @@ def generate_mesh_from_surface(surface, shape, max_u, max_v):
     # mesh.buffer[:,:]['color']    = palette['red'].view(FloatPixel)
 
     return mesh
-    
 
-def generate_mesh(center, radius):
-    from math import cos, sin, pi
+def wrap(value, frequency):
+    return value * frequency % 1.
 
-    tau = 2. * pi
+def step(value, cutoff):
+    if value < cutoff:
+        return 0.
+    else:
+        return 1.
 
-    center = (256, 256)
-    radius = 100
+uv = np.array([ 0, 0 ], np.float32)
 
-    def point_from_polar(r, p):
-        return point(
-            center[0] + radius * r * cos(p * tau), 
-            center[1] + radius * r * sin(p * tau),
-            1, 1
-        )
+transform = np.array([
+    [ 1,   0 ],
+    [ -.5, 1 ]
+], dtype=np.float32)
 
-    def color_from_polar(r, p):
-        edge_color = (1 - p) * palette['blue'] + p * palette['black']
-        return (1 - r) * palette['blue'] + r * edge_color
+def shader(u, v):
+    uv[:] = (u, v)
+    u, v = transform.dot(uv)
 
-    upper_left  = (1., (.25 + .5  ) / 2. ) 
-    upper_right = (1., (.0  + .25 ) / 2. ) 
-    lower_left  = (1., (.5  + .75 ) / 2. ) 
-    lower_right = (1., (.75 +  1. ) / 2. ) 
+    high_color = palette['clear']
 
-    # a = [
-    #     [ upper_left, upper_right ],
-    #     [ lower_left, lower_right ],
-    # ]
+    s = step(wrap(v, 10), .5)
+    low_color = (1. - s) * palette['black'] + s * palette['blue']
 
-    # def subdivide(points):
-    #     out = { }
-
-    #     for j in range(len(points) - 1):
-    #         for i in range(len(points[0]) - 1):
+    t = step(wrap(v, 20), .5)
+    return (1. - t) * low_color + t * high_color
 
 
-    # angles = [
-    #     [ .5 * tau,   .375 * tau, .25 * tau,  ],
-    #     [ .625 * tau, None,       .125 * tau, ],
-    #     [ .75 * tau,  .875 * tau, 0. * tau,   ],
-    # ]
+def render_mesh(mesh):
+    cache = TileCache((16, 16), 4, FloatPixel)
 
-    polars = [ 
-        [ (1., (.25 + .5)/2), (1., .25), (1., .25 / 2),        ],
-        [ (1., .5),           (0., 0.),  (1., 0.),             ],
-        [ (1., (.5 + .75)/2), (1., .75), (1., (.75 + 1.) / 2), ],
-    ]
-
-    # polars = [ 
-    #     [ (1., (.25 + .5)/2), (1., .25 / 2),        ],
-    #     [ (1., (.5 + .75)/2), (1., (.75 + 1.) / 2), ],
-    # ]
-
-    def subdivide_pair(prev_pair, next_pair):
-        r = (prev_pair[0] + next_pair[0]) / 2
-
-        if r == 0.:
-            return (r, 0.)
-        
-        p = (prev_pair[1] + next_pair[1]) / 2
-        return (r, p)
-
-
-    def subdivide_row(row):
-        out = [ row[0] ]
-        for p, n in zip(row, row[1:]):
-            out.append(subdivide_pair(p, n))
-            out.append(n)
-        return out
-
-    def subdivide_columns(prev_row, next_row):
-        out = [ ]
-        for p, n in zip(prev_row, next_row):
-            out.append(subdivide_pair(p, n))
-
-        return out
-
-    def subdivide_polars(polars):
-        next_polars = [ ]
-
-        prev_row = None
-        next_row = None
-
-        for row in polars:
-            prev_row, next_row = next_row, subdivide_row(row)
-
-            if prev_row is None:
-                continue
-
-            if not next_polars:
-                next_polars.append(prev_row)
-
-            next_polars.append(subdivide_columns(prev_row, next_row))
-            next_polars.append(next_row)
-
-        return next_polars
-
-    polars = subdivide_polars(polars)
-    
-    points = [ [ point_from_polar(*p) for p in row ] for row in polars ]
-    colors = [ [ color_from_polar(*p) for p in row ] for row in polars ]
-
-    shape = (len(polars) - 1, len(polars[0]) - 1)
-
-    mesh = MicropolygonMesh(shape)
-    mesh.buffer[:,:]['position'] = points
-    mesh.buffer[:,:]['color']    = colors
-
-    return mesh
-
-def render_mesh(mesh, tile):
-    tile_width, tile_height = tile.buffer.shape
+    mesh_bounds = mesh.outer_bounds
     mesh_width, mesh_height = mesh.buffer.shape
 
-    fill_micropolygon_mesh(
-        mesh_width, mesh_height,
-        generate_numpy_begin(mesh.buffer),
-        generate_numpy_begin(mesh.bounds),
-        tile_width, tile_height,
-        generate_numpy_begin(tile.coordinate_image),
-        generate_numpy_begin(tile.buffer)
-    )
+    for tile in cache.get_tiles_for_bounds(mesh_bounds):
+        tile_width, tile_height = tile.buffer.shape
 
-    return tile
+        fill_micropolygon_mesh(
+            mesh_width, mesh_height,
+            generate_numpy_begin(mesh.buffer),
+            generate_numpy_begin(mesh.bounds),
+            tile_width, tile_height,
+            tile.bounds,
+            generate_numpy_begin(tile.coordinate_image),
+            generate_numpy_begin(tile.buffer)
+        )
 
+    return cache
 
 
 if __name__ == '__main__':

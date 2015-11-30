@@ -4,6 +4,7 @@ from .Coordinate import Coordinate
 from .Exceptions import HandsomeException
 from .Interval import Interval
 from .Pixel import Pixel, array_view, pixel_view
+from handsome.capi import Rectangle
 import math
 import numpy as np
 
@@ -18,6 +19,7 @@ class Tile:
 
         self.__buffer = None
         self.__coordinate_image = None
+        self.__tile_bounds = None
 
 
     def set_origin(self, origin):
@@ -25,6 +27,7 @@ class Tile:
         self.horizontal = Interval(origin[0], origin[0] + self.shape[0])
         self.vertical   = Interval(origin[1], origin[1] + self.shape[1])
         self.__coordinate_image = None
+        self.__tile_bounds = None
 
 
     def contains_point(self, point):
@@ -43,10 +46,12 @@ class Tile:
 
     def intersection_slices(self, other):
         horizontal = self.horizontal.intersection(other.horizontal)
-        if horizontal is None: return None
+        if horizontal is None:
+            return None
 
         vertical = self.vertical.intersection(other.vertical)
-        if vertical is None: return None
+        if vertical is None:
+            return None
 
         return (
             self.slice_from_intervals(horizontal, vertical),
@@ -57,10 +62,11 @@ class Tile:
     def slice_from_intervals(self, horizontal, vertical):
         left = self.origin[0]
         top = self.origin[1] + self.shape[1]
+        sample_rate = self.sample_rate
 
         return np.s_[
-            horizontal.start - left : horizontal.end - left : 1,
-            top - vertical.end : top - vertical.start : 1
+            (horizontal.start - left) * sample_rate : (horizontal.end - left) * sample_rate : 1,
+            (top - vertical.end) * sample_rate : (top - vertical.start) * sample_rate : 1
         ]
 
         
@@ -82,6 +88,20 @@ class Tile:
         self.__coordinate_image = make_coordinate_image(self.origin, self.shape, self.sample_rate)
 
         return self.__coordinate_image
+
+    @property
+    def bounds(self):
+        if self.__tile_bounds is not None:
+            return self.__tile_bounds
+
+        self.__tile_bounds = Rectangle(
+            self.origin[0],
+            self.origin[1],
+            self.origin[0] + self.shape[0],
+            self.origin[1] + self.shape[1]
+        )
+
+        return self.__tile_bounds
 
 
     def downsample(self, sample_rate):
@@ -133,6 +153,22 @@ class Tile:
                 }
             )
 
+        slices = self.intersection_slices(from_tile)
+
+        if slices is None:
+            return
+
+        target_slice, source_slice = slices
+
+        alpha = np.copy(from_tile.buffer[source_slice]['A'])
+        alpha = alpha.reshape(alpha.shape + (1,))
+
+        target = array_view(self.buffer[target_slice])
+
+        target[:] = (
+            (1 - alpha) * array_view(self.buffer[target_slice])
+            + alpha * array_view(from_tile.buffer[source_slice])
+        )
 
 def make_coordinate_image(origin, shape, sample_rate):
     xs = np.linspace(
@@ -155,6 +191,7 @@ def make_coordinate_image(origin, shape, sample_rate):
         out[:,y]['x'] = xs
 
     return out
+
 
 def strides(start, stop, step=1):
     begin, end = None, None
