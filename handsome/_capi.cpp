@@ -25,21 +25,35 @@ inline std::ostream & operator << (std::ostream & out, Rectangle const & r) {
 }
 
 namespace {
+  inline bool points_are_close(Vec4 const & left, Vec4 const & right) {
+    float x = left.x() - right.x(),
+          y = left.y() - right.y(),
+          z = left.z() - right.z(),
+          w = left.w() - right.w()
+    ;
+
+    return x * x + y * y + z * z + w * w < .01;
+  }
+
+  inline bool points_are_close(Vertex const & v, Vec4 const & p) {
+    return points_are_close(v.position, p);
+  }
+
   void _fill_micropolygon(
     Vertex const & lower_left,  Vertex const & upper_left,
     Vertex const & lower_right, Vertex const & upper_right,
     Vec4 const & bounding_box,
-    int width, int height,
+    int rows, int columns,
     Coordinate const * coordinates,
     Pixel * tile
   )
   {
-    for (int j = 0; j < height; ++j) {
-      Vec2 const * coordinate_row = coordinates + j * width;
-      Pixel * image_row = tile + j * width;
+    for (int i = 0; i < rows; ++i) {
+      Vec2 const * coordinate_row = coordinates + i * columns;
+      Pixel * image_row = tile + i * columns;
 
-      for (int i = 0; i < width; ++i) {
-        Coordinate const & c = *(coordinate_row + i);
+      for (int j = 0; j < columns; ++j) {
+        Coordinate const & c = *(coordinate_row + j);
 
         bool skip =
           c.x() < bounding_box.x() || bounding_box.z() < c.x()
@@ -67,35 +81,35 @@ namespace {
              top    = up * upper_left.color + u * upper_right.color
         ;
 
-        *(image_row + i) = vp * bottom + v * top;
+        *(image_row + j) = vp * bottom + v * top;
       }
     }
   }
 
   void _fill_micropolygon_mesh(
-    int mesh_width, int mesh_height,
+    int mesh_rows, int mesh_columns,
     Vertex const * mesh, BoundingBox const * bounds,
-    int tile_width, int tile_height,
+    int tile_rows, int tile_columns,
     Rectangle const & tile_bounds,
     Coordinate * coordinates,
     Pixel * tile
   )
   {
-    int bounds_width = mesh_width - 1;
+    int bounds_columns = mesh_columns - 1;
 
-    for (int j = 1; j < mesh_height; ++j) {
-      Vertex const * lower_row = mesh + j * mesh_width;
-      BoundingBox const * bounds_row = bounds + (j - 1) * bounds_width;
+    for (int i = 1; i < mesh_rows; ++i) {
+      Vertex const * lower_row = mesh + i * mesh_columns;
+      BoundingBox const * bounds_row = bounds + (i - 1) * bounds_columns;
 
-      for (int i = 1; i < mesh_width; ++i) {
+      for (int j = 1; j < mesh_columns; ++j) {
         Vertex const
-          * lower_right = lower_row + i,
+          * lower_right = lower_row + j,
           * lower_left  = lower_right - 1,
-          * upper_right = lower_right - mesh_width,
-          * upper_left  = lower_left - mesh_width
+          * upper_right = lower_right - mesh_columns,
+          * upper_left  = lower_left - mesh_columns
         ;
 
-        Vec4 const & poly_bounds = *(bounds_row + i - 1);
+        Vec4 const & poly_bounds = *(bounds_row + j - 1);
 
         bool skip =
           tile_bounds.right < poly_bounds.x()
@@ -110,7 +124,7 @@ namespace {
           *lower_left, *upper_left,
           *lower_right, *upper_right,
           poly_bounds,
-          tile_width, tile_height,
+          tile_rows, tile_columns,
           coordinates, tile
         );
       }
@@ -143,44 +157,46 @@ namespace {
   }
 
   BoundingBox _fill_bounds_buffer(
-    int mesh_width, int mesh_height,
+    int mesh_rows, int mesh_columns,
     Vertex const * mesh,
     BoundingBox * bounds
   )
   {
-    int bounds_width = mesh_width - 1,
-      bounds_height = mesh_height - 1;
+    int bounds_rows = mesh_rows - 1,
+      bounds_columns = mesh_columns - 1;
 
     Vec2 left = to_projection_plane(mesh->position),
       right(0, 0);
 
     BoundingBox total(left.x(), left.y(), left.x(), left.y());
 
-    for (int i = 1; i < mesh_width; ++i) {
-      right = to_projection_plane((mesh + i)->position);
-      *(bounds + i - 1) = make_bounding_box(left, right);
-      total = combine_bounding_boxes(total, *(bounds + i - 1));
+    for (int j = 1; j < mesh_columns; ++j) {
+      right = to_projection_plane((mesh + j)->position);
+      *(bounds + j - 1) = make_bounding_box(left, right);
+      total = combine_bounding_boxes(total, *(bounds + j - 1));
       left = right;
     }
 
+    for(int i = 1; i < mesh_rows; ++i) {
+      Vec4 * lower_bounds = bounds + i * bounds_columns,
+           * upper_bounds = lower_bounds - bounds_columns;
 
-    for(int j = 1; j < mesh_height; ++j) {
-      Vec4 * lower_bounds = bounds + j * bounds_width,
-           * upper_bounds = lower_bounds - bounds_width;
-
-      Vertex const * lower_row = mesh + j * mesh_width;
+      Vertex const * lower_row = mesh + i * mesh_columns;
       left = to_projection_plane(lower_row->position);
 
-      for (int i = 1; i < mesh_width; ++i) {
-        right = to_projection_plane((lower_row + i)->position);
+      for (int j = 1; j < mesh_columns; ++j) {
+        right = to_projection_plane((lower_row + j)->position);
 
         Vec4 b = make_bounding_box(left, right);
-        if (j < bounds_height) { *lower_bounds = b; }
+        if (i < bounds_rows) { *lower_bounds = b; }
         *upper_bounds = combine_bounding_boxes(*upper_bounds, b);
         total = combine_bounding_boxes(total, *upper_bounds);
 
         ++lower_bounds;
         ++upper_bounds;
+        left = right;
+      }
+    }
       }
     }
 
@@ -190,25 +206,25 @@ namespace {
 
 extern "C" {
   void fill_micropolygon_mesh(
-    int mesh_width, int mesh_height,
+    int mesh_rows, int mesh_columns,
     Vertex const * mesh, BoundingBox const * bounds,
-    int tile_width, int tile_height,
+    int tile_rows, int tile_columns,
     Rectangle tile_bounds,
     Coordinate * coordinates,
     Pixel * tile
   )
   {
     _fill_micropolygon_mesh(
-      mesh_width, mesh_height,
+      mesh_rows, mesh_columns,
       mesh, bounds,
-      tile_width, tile_height,
+      tile_rows, tile_columns,
       tile_bounds,
       coordinates, tile
     );
   }
 
   Rectangle fill_bounds_buffer(
-    int mesh_width, int mesh_height,
+    int mesh_rows, int mesh_columns,
     Vertex const * mesh,
     BoundingBox * bounds
   )
@@ -216,8 +232,8 @@ extern "C" {
     Rectangle out;
 
     BoundingBox b = _fill_bounds_buffer(
-      mesh_width,
-      mesh_height,
+      mesh_rows,
+      mesh_columns,
       mesh,
       bounds
     );

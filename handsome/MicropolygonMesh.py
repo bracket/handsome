@@ -35,7 +35,7 @@ class MicropolygonMesh:
             return self.__buffer
 
         shape = (self.shape[0] + 1, self.shape[1] + 1)
-        self.__buffer = np.zeros(shape=shape, dtype=Vertex, order='F')
+        self.__buffer = np.zeros(shape=shape, dtype=Vertex)
 
         return self.__buffer
 
@@ -45,11 +45,13 @@ class MicropolygonMesh:
             return self.__bounds
 
         buffer = self.__buffer
-        self.__bounds = np.zeros(self.shape, dtype=Position, order='F')
+        mesh_rows, mesh_columns = buffer.shape
+        bounds_rows, bounds_columns = mesh_rows - 1, mesh_columns - 1
+
+        self.__bounds = np.zeros((bounds_rows, bounds_columns), dtype=Position)
 
         outer_bounds = fill_bounds_buffer(
-            self.shape[0] + 1,
-            self.shape[1] + 1,
+            mesh_rows, mesh_columns,
             generate_numpy_begin(buffer),
             generate_numpy_begin(self.__bounds),
         )

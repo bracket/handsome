@@ -76,7 +76,7 @@ class Tile:
             return self.__buffer
 
         shape = (self.shape[0] * self.sample_rate, self.shape[1] * self.sample_rate)
-        self.__buffer = np.zeros(shape=shape, dtype=self.dtype, order='F')
+        self.__buffer = np.zeros(shape=shape, dtype=self.dtype)
         return self.__buffer
 
 
@@ -181,8 +181,8 @@ def make_coordinate_image(origin, shape, sample_rate):
         endpoint = False, dtype = np.float32
     )[::-1]
 
-    shape = (len(xs), len(ys))
-    out = np.zeros(shape, dtype=Coordinate, order='F')
+    shape = (len(ys), len(xs))
+    out = np.zeros(shape, dtype=Coordinate)
 
     for x in range(shape[0]):
         out[x,:]['y'] = ys
