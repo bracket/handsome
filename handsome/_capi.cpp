@@ -190,6 +190,7 @@ namespace {
         Vec4 b = make_bounding_box(left, right);
         if (i < bounds_rows) { *lower_bounds = b; }
         *upper_bounds = combine_bounding_boxes(*upper_bounds, b);
+
         total = combine_bounding_boxes(total, *upper_bounds);
 
         ++lower_bounds;
@@ -197,10 +198,40 @@ namespace {
         left = right;
       }
     }
-      }
-    }
 
     return total;
+  }
+
+  void _downsample_tile(
+    Vec4 const * in,
+    int in_width, int in_height,
+    int down_width, int down_height,
+    Vec4 * out,
+    int out_width, int out_height
+  )
+  {
+    float downsample_factor = 1. / static_cast<float>(down_width * down_height);
+
+    for (int in_j = 0, out_j = 0; in_j < in_height && out_j < out_height; in_j += down_height, ++out_j) {
+      Vec4 * out_row = (out + out_j * out_width);
+
+      for (int in_i = 0, out_i = 0; in_i < in_width && out_i < out_width; in_i += down_width, ++out_i) {
+        Vec4 sample(0, 0, 0, 0);
+
+        int end_i = (std::min)(in_width, in_i + down_width),
+            end_j = (std::min)(in_height, in_j + down_height);
+
+        for (int j = in_j; j < end_j; ++j) {
+          Vec4 const * in_row = in + j * in_width;
+
+          for (int i = in_i; i < end_i; ++i) {
+            sample += *(in_row + i);
+          }
+        }
+
+        *(out_row + out_i) = downsample_factor * sample;
+      }
+    }
   }
 }
 
@@ -244,5 +275,20 @@ extern "C" {
     out.top = b.w();
 
     return out;
+  }
+
+  void downsample_tile(
+    Pixel const * in,
+    int in_width, int in_height,
+    int down_width, int down_height,
+    Vec4 * out,
+    int out_width, int out_height
+  )
+  {
+    _downsample_tile(
+      in, in_width, in_height,
+      down_width, down_height,
+      out, out_width, out_height
+    );
   }
 }

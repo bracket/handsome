@@ -4,7 +4,7 @@ from .Coordinate import Coordinate
 from .Exceptions import HandsomeException
 from .Interval import Interval
 from .Pixel import Pixel, array_view, pixel_view
-from handsome.capi import Rectangle
+from handsome.capi import Rectangle, downsample_tile, generate_numpy_begin
 import math
 import numpy as np
 
@@ -69,7 +69,7 @@ class Tile:
             (top - vertical.end) * sample_rate : (top - vertical.start) * sample_rate : 1
         ]
 
-        
+
     @property
     def buffer(self):
         if self.__buffer is not None:
@@ -103,42 +103,30 @@ class Tile:
 
         return self.__tile_bounds
 
-
     def downsample(self, sample_rate):
-        downrate = int(math.ceil(self.sample_rate / float(sample_rate)))
+        downrate = int(math.ceil(self.sample_rate / sample_rate))
 
-        buffer = array_view(self.buffer)
-
-        kernel = np.full(
-            shape = (downrate, downrate, buffer.shape[-1]),
-            fill_value = (1. / downrate)**2,
-            dtype=buffer.dtype
-        )
-
-        return self.block_filter(kernel)
-
-
-    def block_filter(self, kernel):
+        in_height, in_width = self.buffer.shape
         buffer = array_view(self.buffer)
 
         new_shape = [
-            int(math.ceil(float(o)/float(k)))
-            for o, k in zip(buffer.shape, kernel.shape)
+            int(math.ceil(o / downrate))
+            for o in buffer.shape
         ]
 
         new_shape[-1] = buffer.shape[-1]
-        new_shape = tuple(new_shape)
+        out_height, out_width = new_shape[:2]
 
-        out = np.empty(
-            shape=new_shape,
-            dtype=buffer.dtype
+        out = np.zeros(shape=new_shape, dtype=np.float32)
+
+        downsample_tile(
+            generate_numpy_begin(buffer),
+            in_width, in_height,
+            downrate, downrate,
+            generate_numpy_begin(out),
+            out_width, out_height
+
         )
-
-        for i, (x_start, x_end) in enumerate(strides(0, buffer.shape[0], kernel.shape[0])):
-            for j, (y_start, y_end) in enumerate(strides(0, buffer.shape[1], kernel.shape[1])):
-                pixel = buffer[x_start:x_end,y_start:y_end,:] * kernel
-                pixel = pixel.sum(axis=(0,1), keepdims=True)
-                out[i,j] = pixel
 
         return pixel_view(out)
 

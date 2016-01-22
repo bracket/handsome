@@ -1,4 +1,5 @@
 __all__ = [
+    'downsample_tile',
     'fill_micropolygon_mesh',
     'fill_bounds_buffer',
     'generate_numpy_begin',
@@ -54,6 +55,7 @@ class Rectangle(ctypes.Structure):
 
 
 DLL_FUNCS = [
+    'downsample_tile',
     'fill_micropolygon_mesh',
     'fill_bounds_buffer',
 ]
