@@ -1,0 +1,2 @@
+class HandsomeException(Exception):
+    pass
