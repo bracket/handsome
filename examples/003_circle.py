@@ -77,8 +77,8 @@ def generate_meshes_(surface):
         generate_mesh_from_surface(
             surface,
             (1, 8),
-            (0., 1.),
-            (0., 1.)
+            (0.0001, 1.),
+            (0.0001, 1.)
         )
     ]
 
@@ -90,6 +90,8 @@ def main():
 
 
 def render_frame(frame_no):
+    print('rendering frame {}'.format(frame_no))
+
     from math import sin, pi
     tau = 2. * pi
 
@@ -128,12 +130,6 @@ def render_frame(frame_no):
 def generate_mesh_from_surface(surface, shape, u_range, v_range):
     u_start, u_end = u_range
     v_start, v_end = v_range
-
-    if u_start == 0.:
-        u_start = 0.0001
-
-    if v_start == 0.:
-        v_start = 0.0001
 
     u_steps = np.linspace(u_start, u_end, shape[0] + 1, endpoint=True, dtype=np.float32)
     v_steps = np.linspace(v_start, v_end, shape[1] + 1, endpoint=True, dtype=np.float32)
