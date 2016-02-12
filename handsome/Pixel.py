@@ -28,8 +28,10 @@ Pixel      = pixel_type(np.uint8)
 FloatPixel = pixel_type(np.float32)
 HalfPixel  = pixel_type(np.float16)
 
+
 def array_view(pixels):
     return pixels.view(dtype=pixel_to_array[pixels.dtype])
+
 
 def pixel_view(array):
     # TODO: Double check the shape

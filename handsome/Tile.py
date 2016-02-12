@@ -4,6 +4,7 @@ from .Coordinate import Coordinate
 from .Exceptions import HandsomeException
 from .Interval import Interval
 from .Pixel import Pixel, array_view, pixel_view
+from .capi import generate_numpy_begin, c_void_p
 from handsome.capi import Rectangle, downsample_tile, generate_numpy_begin
 import math
 import numpy as np
@@ -20,6 +21,8 @@ class Tile:
         self.__buffer = None
         self.__coordinate_image = None
         self.__tile_bounds = None
+
+        self.__buffer_ptr = None
 
 
     def set_origin(self, origin):
@@ -75,9 +78,29 @@ class Tile:
         if self.__buffer is not None:
             return self.__buffer
 
+        dtype = self.dtype
         shape = (self.shape[0] * self.sample_rate, self.shape[1] * self.sample_rate)
-        self.__buffer = np.zeros(shape=shape, dtype=self.dtype)
-        return self.__buffer
+        cacher = tile_cachers.get((shape, dtype))
+
+        if cacher is None:
+            cacher = tile_cachers[(shape, dtype)] = make_tile_cacher(shape, dtype)
+
+        ptr, buffer = next(cacher)
+
+        self.__buffer_ptr = ptr
+        self.__buffer = buffer
+
+        return buffer
+
+
+    @property
+    def buffer_ptr(self):
+        if self.__buffer_ptr is not None:
+            return self.__buffer_ptr
+
+        buffer = self.buffer
+
+        return self.__buffer_ptr
 
 
     @property
@@ -192,3 +215,32 @@ def strides(start, stop, step=1):
 
     if end is not None:
         yield (end, stop)
+
+
+tile_cachers = { }
+
+
+def make_tile_cacher(shape, dtype, cache_size=int(4 * 2 ** 20)):
+    from functools import reduce
+    from operator import mul
+
+    item_size = dtype.itemsize
+
+    if not isinstance(item_size, int):
+        item_size = dtype().itemsize
+
+    items_per_tile = reduce(mul, shape)
+    tile_size = item_size * items_per_tile
+    tiles_per_cache = max(int(cache_size // tile_size), 1)
+
+    while True:
+        cache = np.zeros(tiles_per_cache * items_per_tile, dtype=dtype)
+        begin = generate_numpy_begin(cache)
+
+        for offset in range(tiles_per_cache):
+            start, end = offset * items_per_tile, (offset + 1) * items_per_tile
+
+            ptr = c_void_p(begin.value + start * item_size)
+            out = cache[start:end].reshape(shape)
+
+            yield (ptr, out)

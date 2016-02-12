@@ -52,3 +52,36 @@ def parse_color(string):
         R, G, B = double[0:2], double[2:4], double[4:6]
         A = 'ff' if len(double) == 6 else double[6:8]
         return tuple(int(v, 16) for v in (R, G, B, A))
+
+
+def render_mesh(mesh):
+    from .Pixel import FloatPixel
+    from .TileCache import TileCache
+    from .capi import fill_micropolygon_mesh, generate_numpy_begin
+
+    cache = TileCache((16, 16), 4, FloatPixel)
+
+    mesh_bounds = mesh.outer_bounds
+    mesh_rows, mesh_columns = mesh.buffer.shape
+
+    for tile in cache.get_tiles_for_bounds(mesh_bounds):
+        tile_rows, tile_columns = tile.buffer.shape
+
+        mesh_buffer_ptr = generate_numpy_begin(mesh.buffer)
+        mesh_bounds_ptr = generate_numpy_begin(mesh.bounds)
+        coordinate_image_ptr = generate_numpy_begin(tile.coordinate_image)
+        tile_bounds = tile.bounds
+        tile_buffer_ptr = tile.buffer_ptr
+        tile_buffer_ptr = generate_numpy_begin(tile.buffer)
+
+        fill_micropolygon_mesh(
+            mesh_rows, mesh_columns,
+            mesh_buffer_ptr,
+            mesh_bounds_ptr,
+            tile_rows, tile_columns,
+            tile_bounds,
+            coordinate_image_ptr,
+            tile_buffer_ptr
+        )
+
+    return cache
