@@ -1,0 +1,34 @@
+{
+    "__class__" : "Scene",
+
+    "canvas" : {
+        "extents" : [ 512, 512 ],
+        "color"   : "#fff",
+    },
+
+    "top" : {
+        "__class__" : "Group",
+        "transformation"  : [
+            [ 1, 0, 0, 10, ],
+            [ 0, 1, 0, 10, ],
+            [ 0, 0, 1, 0, ],
+            [ 0, 0, 0, 1, ],
+        ],
+        "children" : [
+            {
+                "__class__" : "MicropolygonMesh",
+                "vertices" : [
+                    [
+                        [ 0,  0, ],
+                        [ 16, 0, ],
+                    ],
+                    [
+                        [ 0,  16, ],
+                        [ 16, 16, ],
+                    ]
+                ],
+                'color' : '#7f0000'
+           },
+        ]
+    }
+}
