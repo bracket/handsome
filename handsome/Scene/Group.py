@@ -20,3 +20,14 @@ class Group(object):
     @classmethod
     def convert_to_object(cls, data):
         return Group(data)
+
+
+    def convert_to_dict(self):
+        out = { "__class__" : "Group", }
+
+        if self.xform is not None:
+            out['transformation'] = self.xform.tolist()
+
+        out['children'] = [ child.convert_to_dict() for child in self.children ]
+
+        return out

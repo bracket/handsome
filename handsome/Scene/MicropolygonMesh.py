@@ -14,7 +14,7 @@ class MicropolygonMesh(object):
             dtype=np.float32,
         )
 
-        self.points = self.reshape_input(input, data.get('color'))
+        self.vertices = self.reshape_input(input, data.get('color'))
 
 
     def reshape_input(self, input, color=None):
@@ -58,3 +58,12 @@ class MicropolygonMesh(object):
     @classmethod
     def convert_to_object(cls, data):
         return MicropolygonMesh(data)
+
+
+    def convert_to_dict(self):
+        out = {
+            '__class__' : 'MicropolygonMesh',
+            'vertices'  : self.vertices.tolist(),
+        }
+
+        return out

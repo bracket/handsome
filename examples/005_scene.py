@@ -10,18 +10,27 @@ from handsome.TileCache import TileCache
 from handsome.util import render_mesh
 from handsome.TransformStack import TransformStack
 
+
 def main():
+    import sys
+
+    scene_path = sys.argv[1]
+    render_path = sys.argv[2]
+
+    render_image(scene_path, render_path)
+
+
+def render_image(scene_path, out_path):
     from handsome.util import render_mesh, save_array_as_image
 
-    scene = parse_scene('data/005_scene.yaml')
+    scene = parse_scene(scene_path)
     canvas = render_scene(scene)
 
     buffer = array_view(canvas.downsample(1))
     buffer = np.clip(buffer, 0., 1.)
     buffer = (255. * buffer).astype(dtype=np.uint8)
 
-    path = 'render/005_scene.tiff'
-    save_array_as_image(pixel_view(buffer), path, 'RGBA')
+    save_array_as_image(pixel_view(buffer), out_path, 'RGBA')
 
 
 def make_canvas(canvas, sample_rate=4):
@@ -72,11 +81,11 @@ def extract_meshes_from_group(group_data):
 
 
 def extract_meshes_from_micropolygon_mesh(mesh_data):
-    shape = tuple(d - 1 for d in mesh_data.points.shape[:-1])
+    shape = tuple(d - 1 for d in mesh_data.vertices.shape[:-1])
     mesh = MicropolygonMesh(shape)
 
     shape = mesh.buffer.shape
-    mesh.buffer[:] = np.squeeze(mesh_data.points.view(Vertex))
+    mesh.buffer[:] = np.squeeze(mesh_data.vertices.view(Vertex))
 
     buffer = mesh.buffer
 
