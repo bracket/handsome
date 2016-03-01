@@ -1,14 +1,15 @@
-import handsome.Scene
 import numpy as np
 import os
 
 from handsome.MicropolygonMesh import MicropolygonMesh, Vertex, Position
 from handsome.Pixel import FloatPixel, array_view, pixel_view
-from handsome.Scene import parse_scene
 from handsome.Tile import Tile
 from handsome.TileCache import TileCache
 from handsome.util import render_mesh
 from handsome.TransformStack import TransformStack
+
+import sweatervest
+from sweatervest import parse_scene
 
 
 def main():
@@ -101,8 +102,8 @@ def extract_meshes_from_micropolygon_mesh(mesh_data):
     yield mesh
 
 
-mesh_extractors[handsome.Scene.MicropolygonMesh] = extract_meshes_from_micropolygon_mesh
-mesh_extractors[handsome.Scene.Group] = extract_meshes_from_group
+mesh_extractors[sweatervest.MicropolygonMesh] = extract_meshes_from_micropolygon_mesh
+mesh_extractors[sweatervest.Group] = extract_meshes_from_group
 
 
 if __name__ == '__main__':
