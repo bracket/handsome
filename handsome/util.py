@@ -6,6 +6,12 @@ def save_array_as_image(array, path, mode):
     image = Image.frombuffer(mode, array.shape, np.ascontiguousarray(array.T).data, 'raw', mode, 0, 1)
     image.save(path)
 
+def read_image(path):
+    from PIL import Image
+    image = Image.open(path)
+
+    return image
+
 
 def point(x, y, z=1, w=1):
     return np.array([x, y, z, w], dtype=np.float32).T
@@ -63,6 +69,7 @@ def render_mesh(mesh):
 
     mesh_bounds = mesh.outer_bounds
     mesh_rows, mesh_columns = mesh.buffer.shape
+
 
     for tile in cache.get_tiles_for_bounds(mesh_bounds):
         tile_rows, tile_columns = tile.buffer.shape

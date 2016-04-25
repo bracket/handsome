@@ -26,14 +26,17 @@ class c_void_p(ctypes.c_void_p):
 
 NULL_PTR = ctypes.c_void_p(0)
 
-# TODO: array.ctypes.data is apparently slow.  This is need to be optimized (Cython)
 def generate_numpy_begin(array):
     return c_void_p(array.ctypes.data)
 
-# TODO: optimize.  see note to generate_numpy_begin
 def generate_numpy_span(array):
+    from functools import reduce
+    from operator import mul
+
     begin = generate_numpy_begin(array)
-    byte_length = len(array) * array.itemsize
+    item_length = reduce(mul, array.shape)
+
+    byte_length = item_length * array.itemsize
     end = c_void_p(begin.value + byte_length)
     return begin, end
 
