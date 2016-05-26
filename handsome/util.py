@@ -59,7 +59,6 @@ def parse_color(string):
         A = 'ff' if len(double) == 6 else double[6:8]
         return tuple(int(v, 16) for v in (R, G, B, A))
 
-
 def render_mesh(mesh):
     from .Pixel import FloatPixel
     from .TileCache import TileCache
