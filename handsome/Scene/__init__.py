@@ -1,5 +1,5 @@
 from handsome.TransformStack import TransformStack
-from handsome.Pixel import pixel_view
+from handsome.Pixel import array_view, pixel_view
 from handsome.util import render_mesh
 
 import numpy as np
@@ -78,7 +78,6 @@ class MeshExtractor(object):
         extractor = self.get_extractor(type(obj))
         return extractor(obj)
 
-
 def extract_meshes_from_group(self, group_data):
     with self.current_xform(group_data.xform):
         for child in group_data.children:
@@ -138,7 +137,9 @@ def extract_meshes_from_micropolygon_mesh(self, mesh_data):
             texture_pointer, texture_width, texture_height,
         )
 
-    yield from slice_mesh(mesh, int(factor / 100))
+    # yield from slice_mesh(mesh, int(factor / 100))
+    yield mesh
+
 
 def slice_mesh(mesh, factor):
     from handsome.MicropolygonMesh import MicropolygonMesh
@@ -172,10 +173,6 @@ def slice_mesh(mesh, factor):
         row_start = row_end
 
 red = pixel_view(np.array([ 1., 0., 0., 1. ], dtype=np.float32))
-
-# def sample_texture_to_mesh(texture, mesh):
-#     mesh.buffer['color'] = red
-
 clear = pixel_view(np.array([ 0., 0., 0., 0. ], dtype=np.float32))
 
 def sample_texture(s, t, texture):
@@ -256,8 +253,6 @@ def generate_texture_module():
     generator.add_structure(Position, 'Position')
     generator.add_structure(Vertex, 'Vertex')
 
-    # generator.add_variable(Variable('green', 'Color', '{ 0., 1., 0., 1. }', True))
-
     f = generator.add_function(
         'sample_texture',
         FloatPixel,
@@ -307,10 +302,7 @@ def generate_texture_module():
         'return *reinterpret_cast<Color const *>(&vec);'
     )
 
-
-    #TODO: Ugh...
     import ctypes
-    from handsome.capi import c_void_p
     sg = generator.structure_generator
 
     vertex_pointer = ctypes.POINTER(sg.get_ctypes_definition(Vertex))
@@ -356,9 +348,7 @@ def generate_module_so(module_generator):
     import ctypes
     import tempfile
 
-    # with tempfile.TemporaryDirectory() as tmpdir:
-    if True:
-        tmpdir = 'tmp'
+    with tempfile.TemporaryDirectory() as tmpdir:
         # TODO: Generate unique path and module name from the module generator
         source_path = os.path.join(str(tmpdir), 'texture_library.cpp')
 
@@ -366,7 +356,7 @@ def generate_module_so(module_generator):
             fd.write(module_generator.render_module())
 
         so_path = build_so(
-            '___test__.texture_library',
+            '__test__.texture_library',
             str(tmpdir),
             [ source_path ],
             { 'include_dirs' : [ find_handsome_include_dir() ] }
@@ -486,6 +476,95 @@ def extract_meshes_from_circle(self, circle):
     yield mesh
 
 
+def pairwise(seq):
+    import itertools
+    a, b = itertools.tee(iter(seq))
+    next(b)
+    yield from zip(a, b)
+
+
+def triwise(seq):
+    import itertools
+    a, b, c = itertools.tee(iter(seq), 3)
+    next(b)
+    next(c)
+    next(c)
+    yield from zip(a, b, c)
+
+
+def splay(start, end, width):
+    direction = end - start
+
+    right = np.cross(direction, (0, 0, 1))
+    right *= (width / np.linalg.norm(right))
+
+    return [
+        start + right,
+        start - right,
+        direction
+    ]
+
+
+def extract_meshes_from_line_path(self, line_path):
+    from handsome.MicropolygonMesh import MicropolygonMesh
+
+    vertices = line_path.vertices
+
+    line_width = float(line_path.data['width']) / 2.
+    length, _ = vertices.shape
+
+    points = vertices[:,:3] / vertices[:,3].reshape((length, 1))
+
+    mesh = MicropolygonMesh((length - 1, 1))
+
+    ptype = np.dtype((vertices.dtype, 4))
+    positions = mesh.buffer[:,:]['position'].view(dtype=ptype)
+
+    colors = array_view(mesh.buffer[:,:]['color'])
+    colors[:,0,:] = vertices[:,4:]
+    colors[:,1,:] = vertices[:,4:]
+
+    start_low, start_high, _ = splay(points[0,:], points[1,:], line_width)
+    positions[0,0,:3] = start_high * vertices[0,3]
+    positions[0,0,3]  = vertices[0,3]
+
+    positions[0,1,:3] = start_low * vertices[0,3]
+    positions[0,1,3]  = vertices[0,3]
+
+    # TODO: If consecutive segments are parallel the matrices are singular.  One
+    # should deal with such things.
+
+    for i, (a, b, c) in enumerate(triwise(points)):
+        index = i + 1
+
+        a_low, a_high, ab = splay(a, b, line_width)
+        b_low, b_high, bc = splay(b, c, line_width)
+
+        A = np.array([ ab[:2], -bc[:2] ]).T
+        b = (b_high - a_high)[:2]
+        u, v = np.linalg.solve(A, b)
+
+        positions[index,0,:3] = (a_high + u * ab) * vertices[index,3]
+        positions[index,0,3]  = vertices[index,3]
+
+        b = (b_low - a_low)[:2]
+        u, v = np.linalg.solve(A, b)
+        positions[index,1,:3] = (a_low + u * ab) * vertices[index,3]
+        positions[index,1,3]  = vertices[index,3]
+
+
+    end_high, end_low, _ = splay(points[-1,:], points[-2,:], line_width)
+
+    positions[-1,0,:3] = end_high * vertices[-1,3]
+    positions[-1,0,3]  = vertices[-1,3]
+
+    positions[-1,1,:3] = end_low * vertices[-1,3]
+    positions[-1,1,3]  = vertices[-1,3]
+
+    yield mesh
+
+
 default_mesh_extractors[sweatervest.MicropolygonMesh] = extract_meshes_from_micropolygon_mesh
 default_mesh_extractors[sweatervest.Group] = extract_meshes_from_group
 default_mesh_extractors[sweatervest.Circle] = extract_meshes_from_circle
+default_mesh_extractors[sweatervest.LinePath] = extract_meshes_from_line_path
