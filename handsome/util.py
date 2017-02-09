@@ -29,7 +29,7 @@ def make_color_grammar():
     import re
 
     g = { }
-    
+
     g['digit']      = r'[0-9a-fA-F]'
     g['ddigit']     = r'(?:{digit}{{2}})'.format(**g)
     g['hex_color']  = r'^#?(?:(?P<double>{ddigit}{{3,4}})|(?P<single>{digit}{{3,4}}))$'.format(**g)
@@ -69,7 +69,6 @@ def render_mesh(mesh):
     mesh_bounds = mesh.outer_bounds
     mesh_rows, mesh_columns = mesh.buffer.shape
 
-
     for tile in cache.get_tiles_for_bounds(mesh_bounds):
         tile_rows, tile_columns = tile.buffer.shape
 
@@ -91,3 +90,18 @@ def render_mesh(mesh):
         )
 
     return cache
+
+
+def read_texture(path):
+    from PIL import Image
+    from .Pixel import FloatPixel
+
+    image = Image.open(path)
+
+    if image.mode != 'RGBA':
+        image = image.convert('RGBA')
+
+    out = np.array(image).astype(np.float32) / 255.
+    out = np.squeeze(out.view(FloatPixel))
+
+    return out

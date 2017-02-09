@@ -12,6 +12,7 @@ class TileCache:
 
     def tile_origin_for_coordinate(self, coordinate):
         width, height = self.tile_shape
+
         return (
             int(coordinate[0] // width * width),
             int(coordinate[1] // height * height)

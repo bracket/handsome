@@ -341,9 +341,6 @@ def load_sampler_lib():
 
     out = { }
 
-    # out['sample_texture_to_mesh'] = lib['sample_texture_to_mesh']
-    # out['sample_texture_to_mesh'].argtypes = (c_void_p, c_int, c_int, c_void_p, c_int, c_int)
-
     out['generate_mesh'] = lib['generate_mesh']
     out['generate_mesh'].argtypes = (c_void_p, c_int, c_int, c_void_p, c_int, c_int)
 

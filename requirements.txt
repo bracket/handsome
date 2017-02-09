@@ -1,2 +1,4 @@
 pillow>=2.9.0
 numpy>=1.9.2
+sweatervest
+phillip
