@@ -531,26 +531,30 @@ def extract_meshes_from_line_path(self, line_path):
     positions[0,1,:3] = start_low * vertices[0,3]
     positions[0,1,3]  = vertices[0,3]
 
-    # TODO: If consecutive segments are parallel the matrices are singular.  One
-    # should deal with such things.
-
     for i, (a, b, c) in enumerate(triwise(points)):
         index = i + 1
 
         a_low, a_high, ab = splay(a, b, line_width)
         b_low, b_high, bc = splay(b, c, line_width)
 
-        A = np.array([ ab[:2], -bc[:2] ]).T
-        b = (b_high - a_high)[:2]
-        u, v = np.linalg.solve(A, b)
+        try:
+            A = np.array([ ab[:2], -bc[:2] ]).T
+            b = (b_high - a_high)[:2]
+            u, v = np.linalg.solve(A, b)
 
-        positions[index,0,:3] = (a_high + u * ab) * vertices[index,3]
-        positions[index,0,3]  = vertices[index,3]
+            positions[index,0,:3] = (a_high + u * ab) * vertices[index,3]
+            positions[index,0,3]  = vertices[index,3]
 
-        b = (b_low - a_low)[:2]
-        u, v = np.linalg.solve(A, b)
-        positions[index,1,:3] = (a_low + u * ab) * vertices[index,3]
-        positions[index,1,3]  = vertices[index,3]
+            b = (b_low - a_low)[:2]
+            u, v = np.linalg.solve(A, b)
+            positions[index,1,:3] = (a_low + u * ab) * vertices[index,3]
+            positions[index,1,3]  = vertices[index,3]
+        except np.linalg.LinAlgError:
+            positions[index,0,:3] = b_high * vertices[index,3]
+            positions[index,0,3]  = vertices[index,3]
+
+            positions[index,1,:3] = b_low * vertices[index,3]
+            positions[index,1,3]  = vertices[index,3]
 
 
     end_high, end_low, _ = splay(points[-1,:], points[-2,:], line_width)
