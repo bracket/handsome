@@ -462,11 +462,21 @@ def extract_meshes_from_circle(self, circle):
 
     surface = surface_from_circle(circle)
 
+    # TODO: u_start/end, v_start/end probably need to become attributes of the
+    # circle object and we need to make handsome deal with degenerate quads so
+    # that u_start can be 0
+
+    u_start = circle.data.get('u_start', .0001)
+    u_end   = circle.data.get('u_end',    1.)
+
+    v_start = circle.data.get('v_start', 0)
+    v_end   = circle.data.get('v_end', 1.)
+
     mesh = generate_mesh_from_surface(
         surface, None,
         (int(circle.radius / 2), int(circle.radius * pi / 3)),
-        (.0001, 1),
-        (0, 1.),
+        (u_start, u_end),
+        (v_start, v_end),
     )
 
     mesh.buffer[:]['color'] = circle.color.view(FloatPixel)
