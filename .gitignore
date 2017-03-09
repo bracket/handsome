@@ -1,6 +1,6 @@
-venv/
-build/
+*.egg-info/
 *.so
 .DS_Store
 .cache/
-*.egg-info/
+build/
+venv/
