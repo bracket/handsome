@@ -192,7 +192,7 @@ def make_coordinate_image(origin, shape, sample_rate):
         endpoint = False, dtype = np.float32
     )[::-1]
 
-    shape = (len(ys), len(xs))
+    shape = (len(xs), len(ys))
     out = np.zeros(shape, dtype=Coordinate)
 
     for x in range(shape[0]):
