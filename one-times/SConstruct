@@ -1,0 +1,8 @@
+env = Environment()
+
+env['LIBPREFIX'] = ''
+
+env.SharedLibrary(
+    'test',
+    [ 'test.c' ]
+)
