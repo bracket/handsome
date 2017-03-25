@@ -25,18 +25,6 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 def fmt_here(string):
     return string.format(HERE=HERE)
 
-capi = Extension(
-    'handsome/_capi',
-
-    include_dirs = [ fmt_here('{HERE}/src/cpp') ],
-
-    sources = list(map(fmt_here, [
-        '{HERE}/handsome/_capi.cpp',
-        '{HERE}/src/cpp/RationalBilinearInverter.cpp',
-    ])),
-    
-    extra_compile_args = [ '-std=c++11' ],
-)
 
 setup(
     name='handsome',
@@ -53,5 +41,4 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-    ext_modules = [ capi ]
 )

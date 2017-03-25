@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "RationalBilinearInverter.hpp"
 
 typedef Vec2 Coordinate;
