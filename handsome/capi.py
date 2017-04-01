@@ -5,6 +5,8 @@ __all__ = [
     'generate_numpy_begin',
     'generate_numpy_span',
     'Rectangle',
+    'print_coordinates',
+    'print_vertices',
 ]
 
 import os
@@ -86,6 +88,8 @@ DLL_FUNCS = [
     'downsample_tile',
     'fill_micropolygon_mesh',
     'fill_bounds_buffer',
+    'print_coordinates',
+    'print_vertices',
 ]
 
 def update_globals():

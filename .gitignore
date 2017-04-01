@@ -1,6 +1,9 @@
-*.egg-info/
-*.so
-.DS_Store
-.cache/
 build/
+.cache/
+.DS_Store
+*.egg-info/
+*.pyc
+*.pyd
+*.so
 *venv/
+*.tiff
