@@ -6,3 +6,4 @@ build/
 *.pyd
 *.so
 *venv/
+*.tiff

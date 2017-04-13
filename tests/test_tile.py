@@ -61,3 +61,16 @@ def test_downsample():
 
     actual = tile.downsample(1)
     np.testing.assert_array_equal(expected, array_view(actual))
+
+
+def _test_memory_layout():
+    from handsome.capi import print_coordinates, generate_numpy_begin
+
+    tile = Tile((1, 2), (2, 3), 2)
+    actual = tile.coordinate_image
+
+    height, width = actual.shape
+
+    coordinate_ptr = generate_numpy_begin(actual)
+
+    print_coordinates(coordinate_ptr, width * height);

@@ -15,6 +15,14 @@ struct Rectangle {
   float left, bottom, right, top;
 };
 
+inline std::ostream & operator << (std::ostream & out, Vertex const & v) {
+  out << "Vertex(position=" << v.position
+    << ", color=" << v.color
+    << ")";
+
+    return out;
+}
+
 inline std::ostream & operator << (std::ostream & out, Rectangle const & r) {
   out << "Rectangle(left=" << r.left
       << ", bottom= " << r.bottom
@@ -234,6 +242,25 @@ namespace {
       }
     }
   }
+
+    void _print_coordinates(Coordinate const * coordinates, int length) {
+        length = (std::min)(length, 64);
+
+        for (int i = 0; i < length; ++i) {
+            Coordinate const & c = coordinates[i];
+
+            std::cout << "coordinates[" << i << "] = " << c << std::endl;
+        }
+    }
+
+    void _print_vertices(Vertex const * vertices, int length) {
+        length = (std::min)(length, 64);
+
+        for (int i = 0; i < length; ++i) {
+            Vertex const & v = vertices[i];
+            std::cout << "vertices[" << i << "] = " << v << std::endl;
+        }
+    }
 }
 
 extern "C" {
@@ -291,5 +318,13 @@ extern "C" {
       down_width, down_height,
       out, out_width, out_height
     );
+  }
+
+  void print_coordinates(Coordinate const * coordinates, int length) {
+    _print_coordinates(coordinates, length);
+  }
+
+  void print_vertices(Vertex const * vertices, int length) {
+    _print_vertices(vertices, length);
   }
 }

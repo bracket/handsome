@@ -182,24 +182,26 @@ class Tile:
         )
 
 def make_coordinate_image(origin, shape, sample_rate):
+    width, height = shape
+
     xs = np.linspace(
-        origin[0], float(origin[0] + shape[0]), shape[0] * sample_rate,
+        origin[0], float(origin[0] + width), width * sample_rate,
         endpoint = False, dtype = np.float32
     )
 
     ys = np.linspace(
-        origin[1], origin[1] + shape[1], shape[1] * sample_rate,
+        origin[1], origin[1] + height, height * sample_rate,
         endpoint = False, dtype = np.float32
     )[::-1]
 
-    shape = (len(xs), len(ys))
+    shape = (len(ys), len(xs))
     out = np.zeros(shape, dtype=Coordinate)
 
-    for x in range(shape[0]):
-        out[x,:]['y'] = ys
+    for x in range(len(xs)):
+        out[:,x]['y'] = ys
 
-    for y in range(shape[1]):
-        out[:,y]['x'] = xs
+    for y in range(len(ys)):
+        out[y,:]['x'] = xs
 
     return out
 
