@@ -1,6 +1,6 @@
 from handsome.TransformStack import TransformStack
 from handsome.Pixel import array_view, pixel_view
-from handsome.util import render_mesh
+from handsome.util import n_wise, render_mesh
 
 import numpy as np
 import os
@@ -578,7 +578,30 @@ def extract_meshes_from_line_path(self, line_path):
     yield mesh
 
 
+def extract_meshes_from_convex_polygon(self, polygon):
+    from handsome.MicropolygonMesh import MicropolygonMesh
+
+    vertices = polygon.vertices
+    center = vertices.sum(axis=0) / vertices.shape[0]
+
+    vertices = list(vertices)
+    assert len(vertices) >= 3
+
+    vertices.extend(vertices[:2])
+
+    for a, b, c in n_wise(vertices, 3):
+        mesh = MicropolygonMesh((1, 1))
+
+        mesh.buffer[0,0] = b
+        mesh.buffer[1,0] = (a + b) / 2
+        mesh.buffer[0,1] = (b + c) / 2
+        mesh.buffer[1,1] = center
+
+        yield mesh
+
+
 default_mesh_extractors[sweatervest.MicropolygonMesh] = extract_meshes_from_micropolygon_mesh
 default_mesh_extractors[sweatervest.Group] = extract_meshes_from_group
 default_mesh_extractors[sweatervest.Circle] = extract_meshes_from_circle
 default_mesh_extractors[sweatervest.LinePath] = extract_meshes_from_line_path
+default_mesh_extractors[sweatervest.ConvexPolygon] = extract_meshes_from_convex_polygon

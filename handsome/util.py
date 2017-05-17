@@ -108,3 +108,9 @@ def read_texture(path):
     out = np.squeeze(out.view(FloatPixel))
 
     return out
+
+
+def n_wise(seq, n):
+    from itertools import islice, tee
+    iters = [ islice(g, i, None) for i, g in enumerate(tee(iter(seq), n)) ]
+    yield from zip(*iters)
