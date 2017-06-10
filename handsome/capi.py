@@ -32,7 +32,7 @@ def build_capi_lib():
     extension_args = generate_extension_args(DLL_FUNCS)
 
     if sys.platform in ('linux', 'linux2', 'darwin'):
-        extension_args['extra_compile_args'] = [ '-std=c++11' ],
+        extension_args['extra_compile_args'] = [ '-std=c++11' ]
     elif sys.platform in ('win32'):
         extension_args['extra_compile_args'] = [ '/std:c++14' ]
 
