@@ -9,6 +9,7 @@ def save_array_as_image(array, path, mode):
     image = Image.frombuffer(mode, array.shape, np.ascontiguousarray(array).data, 'raw', mode, 0, 1)
     image.save(path)
 
+
 def read_image(path):
     from PIL import Image
     image = Image.open(path)
@@ -52,7 +53,9 @@ def parse_color(string):
     g = color_grammar
 
     m = g['hex_color'].match(string)
-    if m is None: return None
+
+    if m is None:
+        return None
 
     single = m.group('single')
     if single is not None:
@@ -66,12 +69,12 @@ def parse_color(string):
         A = 'ff' if len(double) == 6 else double[6:8]
         return tuple(int(v, 16) for v in (R, G, B, A))
 
-def render_mesh(mesh):
+def render_mesh(mesh, tile_shape=(16, 16), sample_rate=4):
     from .Pixel import FloatPixel
     from .TileCache import TileCache
     from .capi import fill_micropolygon_mesh, generate_numpy_begin
 
-    cache = TileCache((16, 16), 4, FloatPixel)
+    cache = TileCache(tile_shape, sample_rate, FloatPixel)
 
     mesh_bounds = mesh.outer_bounds
     mesh_rows, mesh_columns = mesh.buffer.shape
@@ -118,3 +121,7 @@ def n_wise(seq, n):
     from itertools import islice, tee
     iters = [ islice(g, i, None) for i, g in enumerate(tee(iter(seq), n)) ]
     yield from zip(*iters)
+
+
+def points_are_close(p0, p1, tol=1e-5):
+    return np.linalg.norm(p1 - p0) < tol

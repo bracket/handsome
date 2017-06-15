@@ -68,8 +68,8 @@ class Tile:
         sample_rate = self.sample_rate
 
         return np.s_[
-            (horizontal.start - left) * sample_rate : (horizontal.end - left) * sample_rate : 1,
-            (top - vertical.end) * sample_rate : (top - vertical.start) * sample_rate : 1
+            (top - vertical.end) * sample_rate: (top - vertical.start) * sample_rate: 1,
+            (horizontal.start - left) * sample_rate : (horizontal.end - left) * sample_rate : 1
         ]
 
 
@@ -111,6 +111,7 @@ class Tile:
         self.__coordinate_image = make_coordinate_image(self.origin, self.shape, self.sample_rate)
 
         return self.__coordinate_image
+
 
     @property
     def bounds(self):
@@ -177,7 +178,7 @@ class Tile:
         target = array_view(self.buffer[target_slice])
 
         target[:] = (
-            (1 - alpha) * array_view(self.buffer[target_slice])
+            (1 - alpha) * target
             + alpha * array_view(from_tile.buffer[source_slice])
         )
 
