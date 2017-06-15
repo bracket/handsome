@@ -28,7 +28,7 @@ def test_coordinate_image():
         [ (1, 4), (2, 4) ],
         [ (1, 3), (2, 3) ],
         [ (1, 2), (2, 2) ],
-    ], dtype=Coordinate).T
+    ], dtype=Coordinate)
 
     np.testing.assert_array_equal(expected, actual)
 
@@ -41,7 +41,7 @@ def test_coordinate_image_sample_rate():
         [ (0., 1.) , (.5, 1.) , (1., 1.) , (1.5, 1.) , (2., 1.) , (2.5, 1.) , ],
         [ (0., .5) , (.5, .5) , (1., .5) , (1.5, .5) , (2., .5) , (2.5, .5) , ],
         [ (0., 0.) , (.5, 0.) , (1., 0.) , (1.5, 0.) , (2., 0.) , (2.5, 0.) , ],
-    ], dtype=Coordinate).T
+    ], dtype=Coordinate)
 
     np.testing.assert_array_equal(expected, actual)
 
@@ -57,20 +57,7 @@ def test_downsample():
             [ (.25, .25 , 0, 0.), (1.25, .25 , 0., 0.) ],
         ],
         dtype=np.float32
-    ).transpose((1, 0, 2))
+    )
 
     actual = tile.downsample(1)
     np.testing.assert_array_equal(expected, array_view(actual))
-
-
-def _test_memory_layout():
-    from handsome.capi import print_coordinates, generate_numpy_begin
-
-    tile = Tile((1, 2), (2, 3), 2)
-    actual = tile.coordinate_image
-
-    height, width = actual.shape
-
-    coordinate_ptr = generate_numpy_begin(actual)
-
-    print_coordinates(coordinate_ptr, width * height);

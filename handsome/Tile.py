@@ -79,7 +79,7 @@ class Tile:
             return self.__buffer
 
         dtype = self.dtype
-        shape = (self.shape[0] * self.sample_rate, self.shape[1] * self.sample_rate)
+        shape = (self.shape[1] * self.sample_rate, self.shape[0] * self.sample_rate)
         cacher = tile_cachers.get((shape, dtype))
 
         if cacher is None:

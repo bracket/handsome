@@ -20,6 +20,10 @@ def point(x, y, z=1, w=1):
     return np.array([x, y, z, w], dtype=np.float32).T
 
 
+def color(r, g, b, a=1):
+    return np.array([r, g, b, a], dtype=np.float32).T
+
+
 def rotate_left(p):
     return point(-p[1], p[0], 0)
 
