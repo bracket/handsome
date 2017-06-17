@@ -6,7 +6,9 @@ memoize = functools.lru_cache()
 
 def save_array_as_image(array, path, mode):
     from PIL import Image
-    image = Image.frombuffer(mode, array.shape, np.ascontiguousarray(array).data, 'raw', mode, 0, 1)
+    height, width = array.shape
+
+    image = Image.frombuffer(mode, (width, height), np.ascontiguousarray(array).data, 'raw', mode, 0, 1)
     image.save(path)
 
 

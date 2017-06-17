@@ -160,7 +160,7 @@ class Tile:
             raise HandsomeException(
                 'sample rates do not match',
                 {
-                    'self.sample_rate'      : sample_rate,
+                    'self.sample_rate'      : self.sample_rate,
                     'from_tile.sample_rate' : from_tile.sample_rate
                 }
             )

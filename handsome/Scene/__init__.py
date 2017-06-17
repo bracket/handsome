@@ -1,6 +1,6 @@
 from handsome.TransformStack import TransformStack
 from handsome.Pixel import array_view, pixel_view
-from handsome.util import n_wise, render_mesh
+from handsome.util import color, n_wise, render_mesh
 
 import numpy as np
 import os
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-def render_scene(scene, mesh_extractor=None):
+def render_scene(scene, sample_rate=4, mesh_extractor=None):
     canvas = make_canvas(scene.data['canvas'])
 
     if mesh_extractor is None:
@@ -25,7 +25,7 @@ def render_scene(scene, mesh_extractor=None):
     meshes = list(meshes)
 
     for mesh in meshes:
-        cache = render_mesh(mesh)
+        cache = render_mesh(mesh, sample_rate=sample_rate)
         cache.composite_into(canvas)
 
     return canvas
@@ -35,6 +35,9 @@ def make_canvas(canvas, sample_rate=4):
     from handsome.Tile import Tile
     from handsome.Pixel import FloatPixel
     from sweatervest.util import color_to_float
+
+    if isinstance(canvas, Tile):
+        return canvas
 
     extents = canvas['extents']
 
@@ -578,6 +581,78 @@ def extract_meshes_from_line_path(self, line_path):
     yield mesh
 
 
+def hermite_steps(p0, d0, p1, d1, steps):
+    for i in range(steps):
+        t = i / (steps - 1)
+
+        q0 = p0 + t * d0
+        q1 = p1 + (t - 1) * d1
+
+        t2 = t * t
+        t3 = t * t2
+
+        h = 3 * t2 - 2 * t3
+
+        yield (1 - h) * q0 + h * q1
+
+
+def extract_meshes_from_cubic_hermite_path(self, hermite_path):
+    from handsome.MicropolygonMesh import MicropolygonMesh
+
+    vertices = hermite_path.vertices
+    line_width = float(hermite_path.data['width']) / 2.
+    length, _ = vertices.shape
+
+
+    for start in range(0, length, 4):
+        p0, d0, p1, d1 = vertices[start:start + 4]
+
+        c0 = p0[4:]
+        c1 = p1[4:]
+
+        p0 = p0[:3] / p0[3]
+        p1 = p1[:3] / p1[3]
+
+        d0 = d0[:3]
+        d1 = d1[:3]
+
+        segment_length = np.linalg.norm(p1 - p0)
+        steps = int(segment_length / 2)
+
+        mesh = MicropolygonMesh((steps - 1, 1))
+
+        points = [ ]
+        colors = [ ]
+
+        for p, n in n_wise(hermite_steps(p0, d0, p1, d1, steps), 2):
+            left, right, _ = splay(p, n, line_width)
+
+            points.append([
+                np.append(left, 1),
+                np.append(right, 1),
+            ])
+
+        right, left, _ = splay(n, p, line_width)
+
+        points.append([
+            np.append(left, 1),
+            np.append(right,1),
+        ])
+
+        ptype = np.dtype((vertices.dtype, 4))
+        positions = mesh.buffer[:,:]['position'].view(ptype)
+
+        positions[:] = points
+
+        cs = [ (1 - i/(steps - 1)) * c0 + i/(steps - 1) * c1 for i in range(steps) ]
+        cs = np.array(cs).reshape((steps, 1, 4))
+
+        colors = mesh.buffer[:,:]['color'].view(ptype)
+        colors[:] = cs
+
+        yield mesh
+
+
 def extract_meshes_from_convex_polygon(self, polygon):
     from handsome.MicropolygonMesh import MicropolygonMesh
 
@@ -605,3 +680,4 @@ default_mesh_extractors[sweatervest.Group] = extract_meshes_from_group
 default_mesh_extractors[sweatervest.Circle] = extract_meshes_from_circle
 default_mesh_extractors[sweatervest.LinePath] = extract_meshes_from_line_path
 default_mesh_extractors[sweatervest.ConvexPolygon] = extract_meshes_from_convex_polygon
+default_mesh_extractors[sweatervest.CubicHermitePath] = extract_meshes_from_cubic_hermite_path
