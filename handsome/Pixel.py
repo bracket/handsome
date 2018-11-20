@@ -30,7 +30,7 @@ HalfPixel  = pixel_type(np.float16)
 
 
 def array_view(pixels):
-    return pixels.view(dtype=pixel_to_array[pixels.dtype])
+    return pixels.view(pixel_to_array[pixels.dtype])
 
 
 def pixel_view(array):

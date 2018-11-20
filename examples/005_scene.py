@@ -174,9 +174,15 @@ edge_colors = [
     np.array([  0, 0, .7, 1 ], dtype=np.float32),
 ]
 
+def step(x, cutoff):
+    if x < cutoff:
+        return 0.
+    else:
+        return 1.
+
+
 def extract_meshes_from_circle(circle):
     from math import pi
-    from handsome.Shader.misc import step
     import random
 
     surface = surface_from_circle(circle)
@@ -399,5 +405,5 @@ mesh_extractors[sweatervest.Circle] = extract_meshes_from_circle
 
 
 if __name__ == '__main__':
-    # main()
-    generate_texture()
+    main()
+    # generate_texture()

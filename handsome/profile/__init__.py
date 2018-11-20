@@ -188,6 +188,9 @@ class ProfilerContext(object):
         if not self.lp_targets():
             return
 
+        #TODO: Counter needs to tied to enter_count hitting 0.  The line_profiler
+        # needs to be reset after each time it does.
+
         counter = 0
         suffix = '.{}.lprof'.format(counter)
 
@@ -195,7 +198,7 @@ class ProfilerContext(object):
         self.line_profiler().dump_stats(str(output_path))
 
 
-# TODO: Add least one ProfilerContext needs to be instantiated to ensure
+# TODO: At least one ProfilerContext needs to be instantiated to ensure
 # ProfilerPathFinder is registered and post_module_exec hooks run, but if other
 # other contexts are instantiated after symbols they're interested in have been
 # imported they'll silently miss profiling.

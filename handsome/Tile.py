@@ -149,7 +149,6 @@ class Tile:
             downrate, downrate,
             generate_numpy_begin(out),
             out_width, out_height
-
         )
 
         return pixel_view(out)

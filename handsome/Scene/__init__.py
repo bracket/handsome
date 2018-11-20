@@ -14,7 +14,7 @@ __all__ = [
 
 
 def render_scene(scene, sample_rate=4, mesh_extractor=None):
-    canvas = make_canvas(scene.data['canvas'])
+    canvas = make_canvas(scene.data['canvas'], sample_rate)
 
     if mesh_extractor is None:
         mesh_extractor = MeshExtractor(scene)
@@ -80,6 +80,7 @@ class MeshExtractor(object):
     def extract_meshes(self, obj):
         extractor = self.get_extractor(type(obj))
         return extractor(obj)
+
 
 def extract_meshes_from_group(self, group_data):
     with self.current_xform(group_data.xform):
@@ -475,9 +476,11 @@ def extract_meshes_from_circle(self, circle):
     v_start = circle.data.get('v_start', 0)
     v_end   = circle.data.get('v_end', 1.)
 
+    v_steps = max(int(circle.radius * pi / 3), 8)
+
     mesh = generate_mesh_from_surface(
         surface, None,
-        (int(circle.radius / 2), int(circle.radius * pi / 3)),
+        (int(circle.radius / 2), v_steps),
         (u_start, u_end),
         (v_start, v_end),
     )
@@ -555,6 +558,12 @@ def extract_meshes_from_line_path(self, line_path):
             b = (b_high - a_high)[:2]
             u, v = np.linalg.solve(A, b)
 
+            # The matrix is probably pretty close to singular if this is the case
+            # TODO: Miter the joint instead
+
+            if not 1/5 < abs(u) < 5:
+                raise np.linalg.LinAlgError()
+
             positions[index,0,:3] = (a_high + u * ab) * vertices[index,3]
             positions[index,0,3]  = vertices[index,3]
 
@@ -603,7 +612,6 @@ def extract_meshes_from_cubic_hermite_path(self, hermite_path):
     line_width = float(hermite_path.data['width']) / 2.
     length, _ = vertices.shape
 
-
     for start in range(0, length, 4):
         p0, d0, p1, d1 = vertices[start:start + 4]
 
@@ -617,7 +625,7 @@ def extract_meshes_from_cubic_hermite_path(self, hermite_path):
         d1 = d1[:3]
 
         segment_length = np.linalg.norm(p1 - p0)
-        steps = int(segment_length / 2)
+        steps = max(int(segment_length / 2), 2)
 
         mesh = MicropolygonMesh((steps - 1, 1))
 

@@ -54,6 +54,7 @@ NULL_PTR = ctypes.c_void_p(0)
 def generate_numpy_begin(array):
     return c_void_p(array.ctypes.data)
 
+
 def generate_numpy_span(array):
     from functools import reduce
     from operator import mul
