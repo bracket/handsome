@@ -663,6 +663,7 @@ def extract_meshes_from_cubic_hermite_path(self, hermite_path):
 
 def extract_meshes_from_convex_polygon(self, polygon):
     from handsome.MicropolygonMesh import MicropolygonMesh
+    from handsome.Pixel import FloatPixel
 
     vertices = polygon.vertices
     center = vertices.sum(axis=0) / vertices.shape[0]
@@ -674,11 +675,12 @@ def extract_meshes_from_convex_polygon(self, polygon):
 
     for a, b, c in n_wise(vertices, 3):
         mesh = MicropolygonMesh((1, 1))
+        ptype = mesh.buffer.dtype
 
-        mesh.buffer[0,0] = b
-        mesh.buffer[1,0] = (a + b) / 2
-        mesh.buffer[0,1] = (b + c) / 2
-        mesh.buffer[1,1] = center
+        mesh.buffer[0,0] = b.view(ptype)
+        mesh.buffer[1,0] = ((a + b) / 2).view(ptype)
+        mesh.buffer[0,1] = ((b + c) / 2).view(ptype)
+        mesh.buffer[1,1] = center.view(ptype)
 
         yield mesh
 
