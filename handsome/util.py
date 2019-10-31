@@ -125,5 +125,23 @@ def n_wise(seq, n):
     yield from zip(*iters)
 
 
+def pair_wise(seq):
+    from itertools import tee
+    a, b = tee(iter(seq))
+    next(b)
+
+    yield from zip(a, b)
+
+
+def triple_wise(seq):
+    from itertools import tee
+    a, b, c = tee(iter(seq), 3)
+    next(b)
+    next(c)
+    next(c)
+
+    yield from zip(a, b, c)
+
+
 def points_are_close(p0, p1, tol=1e-5):
     return np.linalg.norm(p1 - p0) < tol
