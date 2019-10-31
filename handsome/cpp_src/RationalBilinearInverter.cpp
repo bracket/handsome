@@ -64,10 +64,10 @@ void RationalBilinearInverter::solve(
 	}
 
 	for (int j = 0; j < 4; ++j) {
-		int pivot_row = j; double pivot_value = fabsf(m[j][j]);
+		int pivot_row = j; double pivot_value = (std::abs)(m[j][j]);
 
 		for (int k = j + 1; k < 4; ++k) {
-			auto t = fabsf(m[k][j]);
+			auto t = (std::abs)(m[k][j]);
 			if (t > pivot_value) {
 				pivot_value = t;
 				pivot_row = k;

@@ -34,6 +34,9 @@ inline std::ostream & operator << (std::ostream & out, Rectangle const & r) {
 }
 
 namespace {
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
   inline bool points_are_close(Vec4 const & left, Vec4 const & right) {
     float x = left.x() - right.x(),
           y = left.y() - right.y(),
@@ -47,6 +50,7 @@ namespace {
   inline bool points_are_close(Vertex const & v, Vec4 const & p) {
     return points_are_close(v.position, p);
   }
+#pragma clang diagnostic pop
 
   void _fill_micropolygon(
     Vertex const & lower_left,  Vertex const & upper_left,
