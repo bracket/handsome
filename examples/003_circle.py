@@ -7,6 +7,7 @@ from handsome.capi import fill_micropolygon_mesh, generate_numpy_begin
 from handsome.util import save_array_as_image, point, parse_color
 import numpy as np
 
+from pathlib import Path
 
 def constant(f):
     return f()
@@ -123,7 +124,9 @@ def render_frame(frame_no):
     buffer = np.clip(buffer, 0., 1.)
     buffer = (255. * buffer).astype(dtype=np.uint8)
 
-    path = 'render/003/frame_{:03}.tiff'.format(frame_no)
+    path = Path('render/003/frame_{:03}.tiff'.format(frame_no))
+    path.parent.mkdir(exist_ok=True, parents=True)
+
     save_array_as_image(pixel_view(buffer), path, 'RGBA')
 
 
