@@ -1,6 +1,12 @@
 from pathlib import Path
 from handsome import *
 from pprint import pprint
+from functools import lru_cache
+
+from dataclasses import dataclass
+from typing import List, Tuple
+
+from groupby import list_groupby
 
 import numpy as np
 
@@ -8,8 +14,39 @@ FILE = Path(__file__).resolve().absolute()
 HERE = FILE.parent
 RENDER = HERE / 'render' / '010'
 
+cache = lru_cache(None)
+
+@dataclass
+class Dot:
+    cell: Tuple[int]
+    center : Tuple[float]
+    level: float
+
+
+def main():
+    width = height = 512
+    diagonal = np.array((width, height))
+
+    length_sq = np.sum(diagonal * diagonal)
+    diagonal = diagonal / length_sq
+
+    dots = generate_stipple_dots(width, height)
+    by_cell = list_groupby(dots, key = lambda d: (d.cell[0]//16 * 16, d.cell[1]//16 * 16))
+
+    new_dots = [ ]
+
+    for k, v in by_cell.items():
+        position = np.array(k)
+        value = 1 - np.dot(position, diagonal)
+        new_dots.extend(d for d in v if d.level < value)
+
+    print(len(new_dots))
+    render_stipple_texture(width, height, new_dots)
+
+
 def constant(f):
     return f()
+
 
 @constant
 def palette():
@@ -32,19 +69,15 @@ def palette():
     return colors
 
 
-def generate_dot_mesh():
-    from math import pi, cos, sin
+@cache
+def dot_points():
     div_level = 2
     divisions = 2 ** div_level
 
-    shape = (divisions, divisions)
-
-    mesh = MicropolygonMesh(shape)
-
-    center = np.array((256, 256, 1, 1), dtype=np.float32)
-    radius = 100
-
+    radius = 2.25
     scale = 2 ** -.5
+
+    center = np.array([ 0, 0, 1, 1], dtype=np.float32)
 
     points = [
         [ scale * point(u, v, 0, 0) for u in np.linspace(-1, 1, divisions + 1, endpoint=True) ]
@@ -62,10 +95,26 @@ def generate_dot_mesh():
     points = [ [ center + radius * p for p in row ] for row in points ]
     points = np.squeeze(np.array(points).view(Position))
 
+    return points
+
+
+def generate_dot_mesh(transform):
+    points = dot_points()
+
+    array_type = np.dtype((np.float32 , 4))
+
+    points = points.view(array_type)
+    points = np.einsum('ij,lkj->lki', transform, points).astype(np.float32)
+
+    points = np.squeeze(points.view(Position))
+
+    rows, cols = points.shape
+    shape = (rows - 1, cols - 1)
+
+    mesh = MicropolygonMesh(shape)
+
     mesh.buffer[:,:]['position'] = points
     mesh.buffer[:,:]['color'] = palette['black'].view(FloatPixel)
-
-    pprint(points)
 
     return mesh
 
@@ -91,25 +140,80 @@ def render_mesh(mesh):
 
     return cache
 
-def main():
-    image = Tile((0, 0), (512, 512), 4, dtype=FloatPixel)
+
+def generate_stipple_dots(width, height):
+    from random import Random
+
+    cell_size = 2
+
+    dots = [ ]
+
+    for x in range(0, width, cell_size):
+        for y in range(0, height, cell_size):
+            center = (
+                x + r.uniform(0., cell_size),
+                y + r.uniform(0., cell_size),
+            )
+
+            dot = Dot(
+                cell = (x, y),
+                center = center,
+                level = -1.
+            )
+
+            dots.append(dot)
+
+    r = Random(0xdeadbeef)
+    r.shuffle(dots)
+
+    for i, d in enumerate(dots):
+        d.level = (i / len(dots)) ** (1/3)
+
+    return dots
+
+
+def render_stipple_texture(width, height, dots):
+    size = (width, height)
+
+    image = Tile((0, 0), size, 4, dtype=FloatPixel)
     image.buffer[:,:] = palette['white'].view(dtype=FloatPixel)
 
-    frame_no = 0
+    for d in dots:
+        X = np.array([
+            [ 1., 0,  0,  d.center[0] ],
+            [ 0,  1., 0,  d.center[1] ],
+            [ 0,  0,  1., 0. ],
+            [ 0,  0,  0,  1. ],
+        ])
 
-    mesh = generate_dot_mesh()
+        mesh = generate_dot_mesh(X)
 
-    cache = render_mesh(mesh)
-    cache.composite_into(image)
+        cache = render_mesh(mesh)
+        cache.composite_into(image)
 
     buffer = array_view(image.downsample(1))
     buffer = np.clip(buffer, 0., 1.)
     buffer = (255. * buffer).astype(dtype=np.uint8)
 
-    path = Path(RENDER / 'frame_{:03}.tiff'.format(frame_no))
+    path = Path(RENDER / 'levels.tiff')
     path.parent.mkdir(exist_ok=True, parents=True)
 
     save_array_as_image(pixel_view(buffer), path, 'RGBA')
+
+
+def read_image(path):
+    from PIL import Image
+    image = Image.open(str(path))
+
+    if image.mode != 'RGBA':
+        image = image.convert('RGBA')
+
+    out = np.array(image).astype(np.float32) / 255.
+    out = np.squeeze(out.view(FloatPixel))
+
+    out['A'] = 1.
+
+    return out
 
 
 if __name__ == '__main__':
