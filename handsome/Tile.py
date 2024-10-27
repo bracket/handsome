@@ -9,6 +9,7 @@ from handsome.capi import Rectangle, downsample_tile, generate_numpy_begin
 import math
 import numpy as np
 
+from functools import cached_property
 
 class Tile:
     def __init__(self, origin, shape, sample_rate = 1, dtype=Pixel):
@@ -19,7 +20,6 @@ class Tile:
         self.set_origin(origin)
 
         self.__buffer = None
-        self.__coordinate_image = None
         self.__tile_bounds = None
 
         self.__buffer_ptr = None
@@ -29,7 +29,7 @@ class Tile:
         self.origin     = origin
         self.horizontal = Interval(origin[0], origin[0] + self.shape[0])
         self.vertical   = Interval(origin[1], origin[1] + self.shape[1])
-        self.__coordinate_image = None
+        self.__dict__.pop('coordinate_image', None)
         self.__tile_bounds = None
 
 
@@ -103,14 +103,9 @@ class Tile:
         return self.__buffer_ptr
 
 
-    @property
+    @cached_property
     def coordinate_image(self):
-        if self.__coordinate_image is not None:
-            return self.__coordinate_image
-
-        self.__coordinate_image = make_coordinate_image(self.origin, self.shape, self.sample_rate)
-
-        return self.__coordinate_image
+        return make_coordinate_image(self.origin, self.shape, self.sample_rate)
 
 
     @property
@@ -180,6 +175,7 @@ class Tile:
             (1 - alpha) * target
             + alpha * array_view(from_tile.buffer[source_slice])
         )
+
 
 def make_coordinate_image(origin, shape, sample_rate):
     width, height = shape
