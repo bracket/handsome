@@ -1,0 +1,8 @@
+[submodule "external/sweatervest"]
+	path = external/sweatervest
+	url = https://github.com/bracket/sweatervest.git
+	branch = master
+[submodule "external/phillip"]
+	path = external/phillip
+	url = https://github.com/bracket/phillip.git
+	branch = master
