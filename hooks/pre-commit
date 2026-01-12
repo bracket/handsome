@@ -1,0 +1,25 @@
+#!/bin/bash
+# Pre-commit hook to prevent commits with trailing whitespace
+
+# Colors for output
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Check for trailing whitespace in staged files
+WHITESPACE_CHECK=$(git diff --cached --check --diff-filter=ACMR 2>&1)
+
+if echo "$WHITESPACE_CHECK" | grep -q 'trailing whitespace'; then
+    echo -e "${RED}Error: Trailing whitespace detected!${NC}"
+    echo "The following files have lines with trailing whitespace:"
+    echo ""
+
+    # Show files with trailing whitespace
+    echo "$WHITESPACE_CHECK"
+
+    echo ""
+    echo "Please remove trailing whitespace before committing."
+    echo ""
+    exit 1
+fi
+
+exit 0

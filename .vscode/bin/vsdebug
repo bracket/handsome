@@ -1,0 +1,4 @@
+#!/bin/bash
+# Minimal debug launcher; update MODULE to match your CLI entry point before use.
+MODULE=${MODULE_OVERRIDE:-project_name.cli}
+python -m debugpy --listen 5678 --wait-for-client -m "$MODULE" "$@"

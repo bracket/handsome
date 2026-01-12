@@ -1,0 +1,10 @@
+# Onboarding Chat
+
+Start a conversation in this file with your coding agent before making project-specific changes.
+
+- Describe the project goals, constraints, and any existing assets.
+- Ask the agent to customize `.github/copilot-instructions.md` and expand `README.md` for this project.
+  - A sample prompt for guiding automatic creation of `.github/copilot-instructions.md` is in `scratch/copilot-instructions-onboarding-prompt.md`
+    - For the onboarding issue only: allow the issue to reference this file ('scratch/copilot-instructions-onboarding-prompt.md') as a best-practices guide for customizing Copilot instructions.  This is allowed to contradict the 'no references to scratch/' rule for this issue only.
+- Decide on the package name, CLI entry point, and debugging command (update `.vscode/bin/vsdebug`).
+- Capture decisions, open questions, and follow-up tasks in this transcript.
