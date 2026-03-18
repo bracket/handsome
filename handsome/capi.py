@@ -15,18 +15,23 @@ import functools
 import sys
 
 from pathlib import Path
+from functools import cache
 
-memoize = functools.lru_cache()
+FILE = Path(__file__).resolve()
+HERE = FILE.parent
 
-@memoize
+@cache
+def build_directory():
+    import tempfile
+    return tempfile.TemporaryDirectory(prefix='handsome_capi_build_')
+
+@cache
 def build_capi_lib():
     from phillip.build import build_so, generate_extension_args, load_library
 
-    here = Path(__file__).parent
-
     sources = list(map(str, [
-        here / '_capi.cpp',
-        here / 'cpp_src' / 'RationalBilinearInverter.cpp',
+        HERE / '_capi.cpp',
+        HERE / 'cpp_src' / 'RationalBilinearInverter.cpp',
     ]))
 
     extension_args = generate_extension_args(DLL_FUNCS)
@@ -36,10 +41,10 @@ def build_capi_lib():
     elif sys.platform in ('win32'):
         extension_args['extra_compile_args'] = [ '/std:c++14' ]
 
-    extension_args['include_dirs'] = [ str(here / 'cpp_src') ]
+    extension_args['include_dirs'] = [ str(HERE / 'cpp_src') ]
 
     so_path = build_so(
-        'handsome_capi', str(here),
+        'handsome_capi', build_directory().name,
         sources, extension_args
     )
 
