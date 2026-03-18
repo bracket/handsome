@@ -11,10 +11,10 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "pillow",
+    "phillip @ https://github.com/bracket/phillip/archive/refs/heads/master.tar.gz",
+    "sweatervest @ https://github.com/bracket/sweatervest/archive/refs/heads/master.tar.gz",
     "numpy",
-    "phillip @ file:./external/phillip",
-    "sweatervest @ file:./external/sweatervest",
+    "pillow",
 ]
 
 [tool.setuptools.packages.find]
