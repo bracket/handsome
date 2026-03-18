@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "handsome"
+version = "0.0.1"
+description = "Rasterizer for 2D and 3D image primitives based off of NumPy"
+authors = [
+    { name = "Stephen [Bracket] McCray", email = "mcbracket@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pillow",
+    "numpy",
+    "phillip @ file:./external/phillip",
+    "sweatervest @ file:./external/sweatervest",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["handsome*"]
